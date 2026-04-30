@@ -1,0 +1,2435 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陀螺大戰</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @font-face {
+            font-family: 'Cubic11';
+            src: url('fonts/Cubic_11_1.013_R.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Cubic11', sans-serif;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        html {
+            font-size: 12pt;
+            --mobile-sidebar-height: 278px;
+        }
+
+        body {
+            background-color: #171717;
+            font-family: 'Cubic11', sans-serif;
+            font-size: 12pt;
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        canvas {
+            image-rendering: pixelated;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            background: #222;
+            border: 4px solid #444;
+            width: min(62vh, 100%);
+            height: auto;
+            aspect-ratio: 1;
+            touch-action: none;
+            user-select: none;
+        }
+
+        button, select, input {
+            font-family: 'Cubic11', sans-serif;
+        }
+
+        select, input {
+            background: #000;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 10px;
+            font-size: 12pt;
+            width: 100%;
+        }
+
+        button {
+            background: #e11d48 !important;
+            color: #fff;
+            border: none;
+            padding: 12px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #7f1d1d;
+            text-transform: uppercase;
+            font-size: 12pt;
+            line-height: 1.6;
+        }
+
+        button:disabled {
+            background: #444;
+            color: #999;
+            box-shadow: 4px 4px 0 #222;
+            cursor: not-allowed;
+        }
+
+        button:active:not(:disabled) {
+            box-shadow: 0 0 0;
+            transform: translate(4px, 4px);
+        }
+
+        .secondary-btn {
+            background: #27272a;
+            box-shadow: 4px 4px 0 #111;
+        }
+
+        .app-shell {
+            display: flex;
+            height: 100vh;
+            min-height: 0;
+        }
+
+        .sidebar {
+            width: 260px;
+            background: #050505;
+            border-right: 4px solid #fff;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            overflow-y: auto;
+        }
+
+        .sidebar-spacer {
+            flex: 1;
+            min-height: 18px;
+        }
+
+        .profile-card {
+            border: 2px solid #3f3f46;
+            background: #111;
+            padding: 12px;
+            font-size: 12pt;
+            line-height: 1.8;
+        }
+
+        .nav-btn {
+            width: 100%;
+            text-align: left;
+            background: #27272a;
+            box-shadow: 4px 4px 0 #111;
+        }
+
+        .nav-btn.active {
+            background: #facc15;
+            color: #111;
+            box-shadow: 4px 4px 0 #854d0e;
+        }
+
+        .reset-btn {
+            width: 100%;
+            background: #7f1d1d;
+            box-shadow: 4px 4px 0 #3f0b0b;
+        }
+
+        .test-btn {
+            width: 100%;
+            background: #0f766e;
+            box-shadow: 4px 4px 0 #134e4a;
+            margin-bottom: 10px;
+        }
+
+        .test-btn.active {
+            background: #fb923c;
+            color: #111;
+            box-shadow: 4px 4px 0 #9a3412;
+        }
+
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            overflow-y: auto;
+            background:
+                linear-gradient(rgba(255,255,255,0.025) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(255,255,255,0.025) 2px, transparent 2px),
+                #18181b;
+            background-size: 36px 36px;
+            padding: 20px;
+        }
+
+        .view {
+            display: none;
+            min-height: calc(100vh - 40px);
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        .panel {
+            background: rgba(0, 0, 0, 0.85);
+            border: 3px solid #fff;
+            padding: 18px;
+        }
+
+        .section-title {
+            color: #facc15;
+            font-size: 12pt;
+            border-bottom: 4px solid #fff;
+            padding-bottom: 12px;
+            margin-bottom: 18px;
+        }
+
+        .muted {
+            color: #a1a1aa;
+            font-size: 12pt;
+            line-height: 1.9;
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+        }
+
+        .part-card {
+            border: 2px solid #52525b;
+            background: #0a0a0a;
+            padding: 12px;
+            min-height: 126px;
+            font-size: 12pt;
+            line-height: 1.8;
+        }
+
+        .part-card.locked {
+            color: #71717a;
+            border-style: dashed;
+        }
+
+        .home-pixel-art {
+            width: min(100%, 480px);
+            height: auto;
+            aspect-ratio: 3 / 2;
+            margin: 0 0 18px;
+            border: 4px solid #fff;
+            background: #09090b;
+            image-rendering: pixelated;
+            box-shadow: 6px 6px 0 #27272a;
+        }
+
+        .home-pixel-art svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            shape-rendering: crispEdges;
+        }
+
+        .part-art {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 10px;
+            border: 2px solid #3f3f46;
+            background:
+                linear-gradient(rgba(255,255,255,0.07) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.07) 1px, transparent 1px),
+                #111;
+            background-size: 8px 8px;
+            display: grid;
+            place-items: center;
+            image-rendering: pixelated;
+        }
+
+        .part-art svg {
+            width: 52px;
+            height: 52px;
+            shape-rendering: crispEdges;
+            overflow: visible;
+        }
+
+        .part-art.locked {
+            color: #71717a;
+            font-size: 28px;
+        }
+
+        .loadout-art-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .mini-loadout {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .mini-loadout-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .mini-loadout-separator {
+            color: #71717a;
+        }
+
+        .mini-loadout .part-art {
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            margin: 0;
+            border-width: 1px;
+            background-size: 4px 4px;
+        }
+
+        .mini-loadout .part-art svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .equip-section {
+            border: 2px solid #3f3f46;
+            background: #070707;
+            padding: 12px;
+        }
+
+        .equip-row {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .equip-option {
+            width: 100%;
+            min-height: 128px;
+            background: #111;
+            border: 3px solid #3f3f46;
+            box-shadow: none;
+            padding: 8px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 6px;
+        }
+
+        .equip-option.selected {
+            border-color: #facc15;
+            box-shadow: 0 0 0 3px #fff, 0 0 18px rgba(250, 204, 21, 0.75);
+        }
+
+        .equip-option .part-art {
+            margin-bottom: 0;
+        }
+
+        .spin-icon {
+            width: 64px;
+            height: 64px;
+            border: 2px solid #3f3f46;
+            background: #050505;
+            display: grid;
+            place-items: center;
+            color: #facc15;
+            font-size: 28px;
+        }
+
+        .rarity-sr { color: #facc15; }
+        .rarity-ssr { color: #fb923c; }
+        .rarity-r { color: #38bdf8; }
+        .rarity-n { color: #86efac; }
+
+        .stat-bar {
+            height: 20px;
+            background: #333;
+            margin-top: 5px;
+            border: 1px solid #666;
+        }
+
+        .labeled-stat {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .labeled-stat span {
+            position: absolute;
+            inset: 0;
+            display: grid;
+            place-items: center;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+            line-height: 1;
+        }
+
+        .stat-fill {
+            height: 100%;
+            background: #22c55e;
+            transition: width 0.3s;
+        }
+
+        .compact-stat {
+            margin-top: 8px;
+        }
+
+        .compact-stat .stat-bar {
+            margin-top: 3px;
+        }
+
+        .compact-stat .labeled-stat span {
+            font-size: 10pt;
+        }
+
+        .text-xs,
+        .text-sm,
+        [class*="text-[8px]"],
+        [class*="text-[9px]"],
+        [class*="text-[10px]"] {
+            font-size: 12pt !important;
+        }
+
+        .popup-overlay {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95);
+            padding: 34px;
+            border: 6px double #fff;
+            text-align: center;
+            z-index: 100;
+            min-width: 320px;
+            display: none;
+        }
+
+        .popup-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 90;
+            display: none;
+        }
+
+        #gacha-popup-content {
+            display: grid;
+            justify-items: center;
+            text-align: center;
+        }
+
+        @media (max-width: 860px) {
+            body {
+                overflow: auto;
+                touch-action: auto;
+            }
+
+            button {
+                padding: 10px;
+                box-shadow: 3px 3px 0 #7f1d1d;
+            }
+
+            .app-shell {
+                flex-direction: column;
+                height: auto;
+                min-height: 100dvh;
+            }
+
+            .sidebar {
+                width: 100%;
+                max-height: none;
+                border-right: 0;
+                border-bottom: 4px solid #fff;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 84;
+                display: grid;
+                grid-template-columns: auto 1fr;
+                padding: 8px 10px;
+                gap: 8px 10px;
+                align-items: center;
+                overflow: visible;
+            }
+
+            .sidebar-stats-card {
+                position: static;
+                grid-column: 1 / -1;
+                border-left: 0;
+                border-right: 0;
+                padding: 6px 8px;
+                min-height: 0;
+                box-shadow: none;
+            }
+
+            .sidebar-stats-card h3 {
+                display: none;
+            }
+
+            .sidebar-stats-card .mb-4 {
+                margin-bottom: 6px;
+            }
+
+            .sidebar-stats-card {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 6px;
+                align-items: center;
+            }
+
+            .sidebar-stats-card h3,
+            .sidebar-stats-card #current-loadout {
+                grid-column: 1 / -1;
+            }
+
+            .sidebar-stats-card > div:not(#current-loadout) {
+                margin-bottom: 0;
+            }
+
+            .sidebar-stats-card #current-loadout {
+                margin-top: 6px;
+                line-height: 1.35;
+            }
+
+            .sidebar-stats-card .loadout-art-row {
+                display: none;
+            }
+
+            .mini-loadout {
+                gap: 4px;
+                line-height: 1.25;
+            }
+
+            .sidebar h1 {
+                line-height: 1.2;
+                white-space: nowrap;
+            }
+
+            .sidebar h1 br {
+                display: none;
+            }
+
+            .profile-card {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 6px;
+                padding: 8px;
+                line-height: 1.2;
+            }
+
+            .profile-card > div {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                min-width: 0;
+            }
+
+            .profile-label {
+                font-size: 0;
+                width: 18px;
+                height: 18px;
+                min-width: 18px;
+                display: inline-block;
+                background: currentColor;
+            }
+
+            .profile-player-icon {
+                color: #facc15;
+                clip-path: polygon(35% 8%, 65% 8%, 78% 24%, 72% 45%, 88% 92%, 12% 92%, 28% 45%, 22% 24%);
+            }
+
+            .profile-score-icon {
+                color: #22c55e;
+                clip-path: polygon(18% 10%, 82% 10%, 82% 28%, 58% 28%, 58% 42%, 78% 42%, 78% 60%, 58% 60%, 58% 90%, 38% 90%, 38% 60%, 18% 60%, 18% 42%, 38% 42%, 38% 28%, 18% 28%);
+            }
+
+            .sidebar nav {
+                position: fixed;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 80;
+                display: grid;
+                grid-template-columns: repeat(6, minmax(0, 1fr));
+                gap: 8px;
+                padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+                background: rgba(5, 5, 5, 0.96);
+                border-top: 4px solid #fff;
+            }
+
+            .nav-btn {
+                text-align: center;
+                min-height: 48px;
+                box-shadow: 3px 3px 0 #111;
+                padding: 6px 4px;
+                font-size: 8pt !important;
+                line-height: 1;
+                display: grid;
+                place-items: center;
+                gap: 2px;
+                margin-top: 0px !important;
+            }
+
+            .nav-btn::before {
+                content: attr(data-icon);
+                display: block;
+                font-size: 20pt;
+                line-height: 1;
+            }
+
+            .sidebar-spacer {
+                display: none;
+            }
+
+            .reset-btn,
+            .test-btn {
+                margin: 0;
+                box-shadow: 3px 3px 0 #3f0b0b;
+            }
+
+            .sidebar nav {
+                bottom: 0;
+            }
+
+            .main-content {
+                padding: calc(var(--mobile-sidebar-height, 278px) + 8px) 10px calc(88px + env(safe-area-inset-bottom));
+                overflow: visible;
+            }
+
+            .view {
+                min-height: auto;
+            }
+
+            .view .grid {
+                grid-template-columns: 1fr !important;
+            }
+
+            .panel {
+                padding: 12px;
+            }
+
+            canvas {
+                width: min(100%, calc(100vw - 34px));
+                max-width: 560px;
+            }
+
+            .grid-cards {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            #library-list .grid-cards {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+
+            .part-card {
+                min-height: auto;
+            }
+
+            .equip-row {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .equip-option {
+                width: 100%;
+                min-height: 132px;
+                padding: 8px 6px;
+            }
+
+            .part-art,
+            .spin-icon {
+                width: 58px;
+                height: 58px;
+            }
+
+            .part-art svg {
+                width: 48px;
+                height: 48px;
+            }
+
+            .loadout-art-row {
+                justify-content: center;
+            }
+
+            .popup-overlay {
+                width: calc(100vw - 24px);
+                max-height: 86dvh;
+                min-width: 0;
+                padding: 18px;
+                overflow-y: auto;
+            }
+
+            .popup-overlay .flex {
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            html,
+            body {
+                font-size: 12pt;
+            }
+
+            .section-title {
+                margin-bottom: 12px;
+            }
+
+            .part-art,
+            .spin-icon {
+                width: 52px;
+                height: 52px;
+            }
+
+            .part-art svg {
+                width: 44px;
+                height: 44px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-shell">
+        <aside class="sidebar">
+            <div class="brand-block">
+                <h1 class="text-sm text-yellow-400 leading-relaxed">BEY <br>TOURNAMENT</h1>
+            </div>
+
+            <div class="profile-card">
+                <div><span class="profile-label profile-player-icon">玩家:</span> <span id="sidebar-name" class="text-yellow-400">PLAYER</span></div>
+                <div><span class="profile-label profile-score-icon">分數:</span> <span id="sidebar-score" class="text-green-400">0</span></div>
+            </div>
+
+            <div class="part-card sidebar-stats-card">
+                <h3 class="text-[9px] text-blue-400 uppercase mb-4">Real-Time Stats</h3>
+                <div class="mb-4">
+                    <div class="stat-bar labeled-stat"><div id="bar-atk" class="stat-fill" style="width: 50%"></div><span id="stat-atk">ATK 0</span></div>
+                </div>
+                <div class="mb-4">
+                    <div class="stat-bar labeled-stat"><div id="bar-stm" class="stat-fill" style="width: 50%; background: #38bdf8;"></div><span id="stat-stm">STM 0</span></div>
+                </div>
+                <div>
+                    <div class="stat-bar labeled-stat"><div id="bar-wgt" class="stat-fill" style="width: 50%; background: #facc15;"></div><span id="stat-wgt">WGT 0</span></div>
+                </div>
+                <div class="mt-5 muted" id="current-loadout"></div>
+            </div>
+
+            <nav class="space-y-3">
+                <button class="nav-btn active" data-view="home-view" data-icon="⌂" aria-label="首頁" onclick="showView('home-view')">首頁</button>
+                <button id="battle-nav-btn" class="nav-btn" data-view="battle-view" data-icon="⚔" aria-label="戰鬥" onclick="showView('battle-view')">戰鬥(16強)</button>
+                <button class="nav-btn" data-view="gacha-view" data-icon="◇" aria-label="抽裝備" onclick="showView('gacha-view')">抽裝備</button>
+                <button class="nav-btn" data-view="library-view" data-icon="▣" aria-label="裝備庫" onclick="showView('library-view')">裝備庫</button>
+                <button class="nav-btn" data-view="equip-view" data-icon="✦" aria-label="調整裝備" onclick="showView('equip-view')">調整裝備</button>
+                <button id="trophy-nav-btn" class="nav-btn" data-view="trophy-view" data-icon="★" aria-label="獎杯" onclick="showView('trophy-view')">獎杯(0)</button>
+                <button class="nav-btn hidden" data-view="opponent-view" data-icon="◎" aria-label="下一場對手" onclick="showView('opponent-view')">下一場對手</button>
+            </nav>
+
+            <div class="sidebar-spacer"></div>
+            <button id="test-mode-btn" class="test-btn hidden" onclick="toggleTestMode()">測驗模式</button>
+        </aside>
+
+        <main class="main-content">
+            <section id="home-view" class="view active">
+                <div class="panel max-w-3xl">
+                    <h2 class="section-title">首頁</h2>
+                    <div class="home-pixel-art" aria-label="陀螺像素插圖" role="img">
+                        <svg viewBox="0 0 480 320">
+                            <rect width="480" height="320" fill="#111827"/>
+                            <rect x="0" y="248" width="480" height="72" fill="#0f172a"/>
+                            <rect x="24" y="40" width="432" height="216" fill="#18181b"/>
+                            <rect x="40" y="56" width="400" height="184" fill="#222"/>
+                            <rect x="56" y="72" width="368" height="152" fill="#2a2a2a"/>
+                            <rect x="80" y="96" width="320" height="104" fill="#1f2937"/>
+                            <rect x="104" y="112" width="272" height="72" fill="#111827"/>
+
+                            <rect x="40" y="56" width="16" height="16" fill="#facc15"/>
+                            <rect x="424" y="56" width="16" height="16" fill="#facc15"/>
+                            <rect x="40" y="224" width="16" height="16" fill="#facc15"/>
+                            <rect x="424" y="224" width="16" height="16" fill="#facc15"/>
+
+                            <rect x="88" y="244" width="304" height="12" fill="#334155"/>
+                            <rect x="112" y="260" width="256" height="10" fill="#475569"/>
+                            <rect x="152" y="276" width="176" height="8" fill="#64748b"/>
+
+                            <rect x="216" y="68" width="48" height="20" fill="#f97316"/>
+                            <rect x="192" y="88" width="96" height="20" fill="#fb923c"/>
+                            <rect x="168" y="108" width="144" height="24" fill="#ef4444"/>
+                            <rect x="144" y="132" width="48" height="24" fill="#38bdf8"/>
+                            <rect x="288" y="132" width="48" height="24" fill="#38bdf8"/>
+                            <rect x="168" y="156" width="144" height="24" fill="#22c55e"/>
+                            <rect x="192" y="180" width="96" height="20" fill="#16a34a"/>
+                            <rect x="216" y="200" width="48" height="16" fill="#e5e7eb"/>
+                            <rect x="228" y="216" width="24" height="24" fill="#94a3b8"/>
+                            <rect x="236" y="240" width="8" height="18" fill="#facc15"/>
+
+                            <rect x="216" y="112" width="48" height="48" fill="#e5e7eb"/>
+                            <rect x="228" y="124" width="24" height="24" fill="#111827"/>
+                            <rect x="236" y="132" width="8" height="8" fill="#fff"/>
+
+                            <rect x="132" y="88" width="24" height="12" fill="#facc15"/>
+                            <rect x="324" y="88" width="24" height="12" fill="#facc15"/>
+                            <rect x="116" y="180" width="32" height="12" fill="#fb7185"/>
+                            <rect x="332" y="180" width="32" height="12" fill="#fb7185"/>
+
+                            <rect x="104" y="48" width="8" height="8" fill="#38bdf8"/>
+                            <rect x="360" y="64" width="8" height="8" fill="#22c55e"/>
+                            <rect x="392" y="148" width="8" height="8" fill="#facc15"/>
+                            <rect x="80" y="148" width="8" height="8" fill="#f97316"/>
+                            <rect x="120" y="212" width="8" height="8" fill="#a78bfa"/>
+                            <rect x="352" y="212" width="8" height="8" fill="#38bdf8"/>
+                        </svg>
+                    </div>
+                    
+                    <label class="text-[9px] text-gray-400 uppercase">Player Name</label>
+                    <input type="text" id="player-name-input" maxlength="10" placeholder="PLAYER" value="PLAYER" class="mt-2 mb-4">
+                    <button onclick="savePlayerName()">保存</button>
+                    <div class="mt-8 grid-cards">
+                        <div class="part-card">
+                            <div class="text-yellow-400 mb-2">淘汰賽</div>
+                            <div>從16強開始，每勝一場會晉級並獲得分數。</div>
+                        </div>
+                        <div class="part-card">
+                            <div class="text-yellow-400 mb-2">裝備成長</div>
+                            <div>用分數抽取 N / R / SR 零件，再到調整裝備頁換上。</div>
+                        </div>
+                    </div>
+                    <div class="mt-8">
+                        <button class="reset-btn" onclick="openRestartConfirm()">重置遊戲</button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="battle-view" class="view">
+                <div class="grid lg:grid-cols-[minmax(360px,1fr)_320px] gap-4 items-start">
+                    <div class="panel flex flex-col items-center">
+                        <div class="w-full mb-4 flex items-center justify-center gap-4 flex-wrap">
+                            <div id="game-status" class="text-xs tracking-widest uppercase">16強 READY</div>
+                            <div> | </div>
+                            <button onclick="openLaunchPopup()">準備發射</button>
+                        </div>
+                        <canvas id="gameCanvas"></canvas>
+                    </div>
+
+                    <div class="panel">
+                        <h2 class="section-title">戰鬥</h2>
+                        <div class="space-y-3 text-[8px] leading-relaxed">
+                            <div>目前階段: <span id="battle-round" class="text-yellow-400">16強</span></div>
+                            <div>下一勝利獎勵: <span id="battle-reward" class="text-green-400">100</span></div>
+                            <div>冠軍獎金: <span class="text-green-400">1000</span></div>
+                            <div>冠軍獎杯: <span class="text-yellow-400">Pixel Cup</span></div>
+                        </div>
+                        <div id="battle-loadouts" class="mt-5 space-y-3"></div>
+                        <div class="mt-6 p-3 border-2 border-dashed border-gray-600 bg-black/50">
+                            <p class="muted">
+                                勝利會進入下一輪。贏得冠軍後得到獎杯與特別獎金，然後開始下一個比賽。失敗會保留進度。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="gacha-view" class="view">
+                <div class="panel max-w-4xl">
+                    <h2 class="section-title">抽裝備</h2>
+                    <div class="grid md:grid-cols-[260px_1fr] gap-4">
+                        <div class="part-card">
+                            <div>單抽費用</div>
+                            <div class="text-2xl text-yellow-400 my-4">300</div>
+                            <button id="draw-btn" onclick="drawEquipment()" class="w-full">抽取裝備</button>
+                        </div>
+                        <div class="part-card">
+                            <div class="text-yellow-400 mb-2">機率</div>
+                            <div>N Normal: 62%</div>
+                            <div>R Rare: 27%</div>
+                            <div>SR Super Rare: 8%</div>
+                            <div>SSR Special Super Rare: 3%</div>
+                            <div id="gacha-result" class="mt-5 text-green-400">準備抽取新的零件。</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="library-view" class="view">
+                <div class="panel">
+                    <h2 class="section-title">裝備庫</h2>
+                    <div id="library-list" class="space-y-5"></div>
+                </div>
+            </section>
+
+            <section id="equip-view" class="view">
+                <div class="panel max-w-4xl">
+                    <h2 class="section-title">調整裝備</h2>
+                    <div class="grid md:grid-cols-[1fr_260px] gap-5">
+                        <div class="space-y-4">
+                            <div class="equip-section">
+                                <label class="text-[9px] text-gray-400 uppercase">Spin Direction (旋轉方向)</label>
+                                <div id="equip-spin-options" class="equip-row"></div>
+                            </div>
+
+                            <div class="equip-section">
+                                <label class="text-[9px] text-gray-400 uppercase">Attack Ring (攻擊環)</label>
+                                <div id="equip-ar-options" class="equip-row"></div>
+                            </div>
+
+                            <div class="equip-section">
+                                <label class="text-[9px] text-gray-400 uppercase">Weight Disk (重力環)</label>
+                                <div id="equip-wd-options" class="equip-row"></div>
+                            </div>
+
+                            <div class="equip-section">
+                                <label class="text-[9px] text-gray-400 uppercase">Driver (軸心)</label>
+                                <div id="equip-dr-options" class="equip-row"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </section>
+
+            <section id="trophy-view" class="view">
+                <div class="panel">
+                    <h2 class="section-title">獎杯</h2>
+                    <div id="trophy-list" class="grid-cards"></div>
+                </div>
+            </section>
+
+            <section id="opponent-view" class="view hidden">
+                <div class="panel max-w-3xl">
+                    <h2 class="section-title">下一場對手</h2>
+                    <div id="opponent-info" class="grid-cards"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="popup-backdrop" class="popup-backdrop"></div>
+
+    <div id="launch-overlay" class="popup-overlay">
+        <h1 class="text-xl mb-3 text-yellow-400">READY?</h1>
+        <p id="launch-popup-round" class="text-[9px] mb-3 text-blue-300">16強</p>
+        <p id="launch-popup-opponent" class="text-[9px] mb-6 text-gray-300">VS COM</p>
+        <div id="launch-opponent-loadout" class="text-left mb-6"></div>
+        <div class="flex gap-4 justify-center">
+            <button id="launchBtn" onclick="launchGame()">發射! (GO SHOOT!)</button>
+            <button onclick="closeLaunchPopup()" class="secondary-btn">等一下</button>
+        </div>
+    </div>
+
+    <div id="restart-confirm-overlay" class="popup-overlay">
+        <h1 class="text-xl mb-3 text-red-500">確認</h1>
+        <p class="text-[9px] mb-6 text-yellow-400">重新開始的話所有存檔會清除。</p>
+        <div class="flex gap-4 justify-center">
+            <button onclick="confirmRestartGame()">確認</button>
+            <button onclick="closeRestartConfirm()" class="secondary-btn">取消</button>
+        </div>
+    </div>
+
+    <div id="result-overlay" class="popup-overlay">
+        <h1 id="result-title" class="text-2xl mb-2 text-red-500">YOU WIN!</h1>
+        <p id="result-reason" class="text-xs mb-4 text-yellow-400">持久勝利 (Spin Finish)</p>
+        <p id="result-reward" class="text-[9px] mb-6 text-green-400"></p>
+        <div class="flex gap-4 justify-center">
+            <button id="continue-next-battle-btn" onclick="continueNextBattle()" class="continueNextBattle text-[10px]">繼續</button>
+            <button id="result-equip-btn" onclick="goAdjustEquipmentAfterLoss()" class="secondary-btn text-[10px]" style="display:none;">調整裝備</button>
+            <button onclick="closeResultPopup()" class="secondary-btn text-[10px]">等一下</button>
+        </div>
+    </div>
+
+    <div id="gacha-result-overlay" class="popup-overlay">
+        <h1 class="text-xl mb-3 text-yellow-400">抽取結果</h1>
+        <div id="gacha-popup-content" class="mb-6"></div>
+        <div class="flex gap-4 justify-center">
+            <button onclick="confirmGachaResult()">確認</button>
+            <button onclick="sellGachaResult()" class="secondary-btn">賣掉</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusEl = document.getElementById('game-status');
+        const resultOverlay = document.getElementById('result-overlay');
+        const launchOverlay = document.getElementById('launch-overlay');
+        const restartConfirmOverlay = document.getElementById('restart-confirm-overlay');
+        const gachaResultOverlay = document.getElementById('gacha-result-overlay');
+        const popupBackdrop = document.getElementById('popup-backdrop');
+
+        canvas.width = 600;
+        canvas.height = 600;
+
+        const STORAGE_KEY = 'beyTournamentSave';
+        const SELL_VALUES = { N: 60, R: 150, SR: 360, SSR: 900 };
+
+        let playerName = "PLAYER";
+        let score = 0;
+        let trophies = [];
+        let tournamentIndex = 1;
+        let roundIndex = 0;
+        let lastRewardText = "";
+
+        const ROUNDS = [
+            { name: '16強', reward: 100 },
+            { name: '8強', reward: 180 },
+            { name: '準決賽', reward: 320 },
+            { name: '決賽', reward: 520 }
+        ];
+        const CHAMPION_BONUS = 1000;
+        const DRAW_COST = 300;
+
+        const PARTS = {
+            ar: {
+                triple: { name: '三叉戟', rarity: 'N', atk: 12, stm: 12, wgt: 10, color: '#22c55e', shape: 'triple' },
+                square: { name: '方盾', rarity: 'N', atk: 5, stm: 24, wgt: 22, color: '#38bdf8', shape: 'square' },
+                comet: { name: '彗星刃', rarity: 'R', atk: 26, stm: 6, wgt: 11, color: '#fb7185', shape: 'star' },
+                fortress: { name: '鋼堡環', rarity: 'R', atk: 8, stm: 32, wgt: 31, color: '#a78bfa', shape: 'square' },
+                dragon: { name: '龍皇翼', rarity: 'SR', atk: 40, stm: 10, wgt: 19, color: '#facc15', shape: 'star' },
+                revive: { name: '復甦星環', rarity: 'SSR', atk: 14, stm: 34, wgt: 15, color: '#34d399', shape: 'star', ability: 'idleRegen' },
+                rage: { name: '狂戰擊環', rarity: 'SSR', atk: 32, stm: 7, wgt: 17, color: '#f43f5e', shape: 'star', ability: 'hitAtkUp' },
+                launcher: { name: '破界翼環', rarity: 'SSR', atk: 36, stm: 5, wgt: 23, color: '#fb923c', shape: 'triple', ability: 'doubleAtkRingOut' }
+            },
+            wd: {
+                iron: { name: '鐵環', rarity: 'N', wgt: 16, stm: 5 },
+                light: { name: '鋁環', rarity: 'N', wgt: 4, stm: 13 },
+                heavy: { name: '鉛環', rarity: 'R', wgt: 36, stm: -10 },
+                balance: { name: '均衡核心', rarity: 'R', wgt: 20, stm: 17 },
+                meteor: { name: '隕星盤', rarity: 'SR', wgt: 42, stm: 13 },
+                orbit: { name: '外圈烈盤', rarity: 'SSR', wgt: 18, stm: 10, ability: 'outerAtk' },
+                core: { name: '內核持久盤', rarity: 'SSR', wgt: 18, stm: 27, ability: 'innerStm' }
+            },
+            dr: {
+                sharp: { name: '尖頭', rarity: 'N', speed: 0.45, friction: 1.000, atk: 0, drift: 0.012 },
+                flat: { name: '平頭', rarity: 'N', speed: 2.35, friction: 0.992, atk: 9, drift: 0.14 },
+                rubber: { name: '橡膠', rarity: 'R', speed: 3.2, friction: 0.989, atk: 15, drift: 0.22 },
+                needle: { name: '長針軸', rarity: 'R', speed: 0.75, friction: 1.002, atk: 1, drift: 0.025 },
+                accel: { name: '爆速軸', rarity: 'SR', speed: 3.9, friction: 0.993, atk: 22, drift: 0.18 },
+                rebound: { name: '反彈回旋軸', rarity: 'SSR', speed: 2.0, friction: 0.998, atk: 7, drift: 0.075, ability: 'wallRegen' }
+            }
+        };
+
+        const PART_TYPE_LABELS = { ar: '攻擊環', wd: '重力環', dr: '軸心' };
+        const ABILITY_LABELS = {
+            idleRegen: '3秒未碰撞，慢慢回復旋轉力',
+            hitAtkUp: '每擊中對手一次，ATK +1',
+            doubleAtkRingOut: 'ATK達對手兩倍時，對手更容易出界',
+            outerAtk: '在外圈時 ATK +5',
+            innerStm: '在內圈時 STM +5',
+            wallRegen: '每擊中邊界一次，回復5%旋轉力'
+        };
+        const PART_ART_COLORS = {
+            triple: '#22c55e',
+            square: '#38bdf8',
+            comet: '#fb7185',
+            fortress: '#a78bfa',
+            dragon: '#facc15',
+            iron: '#9ca3af',
+            light: '#dbeafe',
+            heavy: '#64748b',
+            balance: '#2dd4bf',
+            meteor: '#f97316',
+            sharp: '#e5e7eb',
+            flat: '#ef4444',
+            rubber: '#111827',
+            needle: '#60a5fa',
+            accel: '#f59e0b',
+            revive: '#34d399',
+            rage: '#f43f5e',
+            launcher: '#fb923c',
+            orbit: '#f97316',
+            core: '#14b8a6',
+            rebound: '#eab308'
+        };
+        let ownedParts = { ar: ['triple'], wd: ['iron'], dr: ['sharp'] };
+        let ownedPartCounts = { ar: { triple: 1 }, wd: { iron: 1 }, dr: { sharp: 1 } };
+        let partLevels = { ar: {}, wd: {}, dr: {} };
+        let selectedParts = { ar: 'triple', wd: 'iron', dr: 'sharp' };
+        let selectedSpinDir = 1;
+        let nextOpponentConfig = null;
+        let nextOpponentName = 'COM';
+        let battlePanelOpponentConfig = null;
+        let battlePanelOpponentName = 'COM';
+
+        let player, enemy;
+        let particles = [];
+        let effects = [];
+        let isGaming = false;
+        let winnerDecided = false;
+        let isPlacingLaunch = false;
+        let pendingLaunchPosition = { x: 165, y: 300 };
+        let isDraggingLaunch = false;
+        let playerControlIntent = null;
+        let playerControlCooldownUntil = 0;
+        let isTestMode = false;
+        let preTestSelectedParts = null;
+        let preTestSpinDir = 1;
+        let pendingGachaResult = null;
+        const PLAYER_CONTROL_DURATION = 1150;
+        const PLAYER_CONTROL_COOLDOWN = 650;
+
+        function getDefaultState() {
+            return {
+                playerName: 'PLAYER',
+                score: 0,
+                trophies: [],
+                tournamentIndex: 1,
+                roundIndex: 0,
+                ownedParts: { ar: ['triple'], wd: ['iron'], dr: ['sharp'] },
+                ownedPartCounts: { ar: { triple: 1 }, wd: { iron: 1 }, dr: { sharp: 1 } },
+                partLevels: { ar: {}, wd: {}, dr: {} },
+                selectedParts: { ar: 'triple', wd: 'iron', dr: 'sharp' },
+                selectedSpinDir: 1
+            };
+        }
+
+        function applyState(state) {
+            const defaults = getDefaultState();
+            const merged = { ...defaults, ...state };
+
+            playerName = typeof merged.playerName === 'string' && merged.playerName.trim() ? merged.playerName : defaults.playerName;
+            score = Number.isFinite(Number(merged.score)) ? Math.max(0, Number(merged.score)) : defaults.score;
+            trophies = Array.isArray(merged.trophies) ? merged.trophies.filter(Boolean) : [];
+            tournamentIndex = Number.isFinite(Number(merged.tournamentIndex)) ? Math.max(1, Number(merged.tournamentIndex)) : defaults.tournamentIndex;
+            roundIndex = Number.isFinite(Number(merged.roundIndex)) ? Math.min(ROUNDS.length - 1, Math.max(0, Number(merged.roundIndex))) : defaults.roundIndex;
+            ownedParts = { ...defaults.ownedParts };
+            ownedPartCounts = { ar: {}, wd: {}, dr: {} };
+            partLevels = { ar: {}, wd: {}, dr: {} };
+
+            ['ar', 'wd', 'dr'].forEach(type => {
+                const saved = Array.isArray(merged.ownedParts?.[type]) ? merged.ownedParts[type] : defaults.ownedParts[type];
+                ownedParts[type] = [...new Set(saved.filter(id => PARTS[type][id]))];
+                if (ownedParts[type].length === 0) ownedParts[type] = [...defaults.ownedParts[type]];
+                ownedParts[type].forEach(id => {
+                    const savedCount = Number(merged.ownedPartCounts?.[type]?.[id]);
+                    const savedLevel = Number(merged.partLevels?.[type]?.[id]);
+                    ownedPartCounts[type][id] = Number.isFinite(savedCount) ? Math.max(1, Math.floor(savedCount)) : 1;
+                    if (Number.isFinite(savedLevel) && savedLevel > 0) partLevels[type][id] = Math.floor(savedLevel);
+                });
+            });
+
+            selectedParts = { ...defaults.selectedParts, ...(merged.selectedParts || {}) };
+            ['ar', 'wd', 'dr'].forEach(type => {
+                if (!ownedParts[type].includes(selectedParts[type])) selectedParts[type] = ownedParts[type][0];
+            });
+
+            selectedSpinDir = parseInt(merged.selectedSpinDir) === -1 ? -1 : 1;
+            document.getElementById('player-name-input').value = playerName;
+        }
+
+        function saveProgress() {
+            const safeSelectedParts = { ...selectedParts };
+            ['ar', 'wd', 'dr'].forEach(type => {
+                if (!ownedParts[type].includes(safeSelectedParts[type])) safeSelectedParts[type] = ownedParts[type][0];
+            });
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                playerName,
+                score,
+                trophies,
+                tournamentIndex,
+                roundIndex,
+                ownedParts,
+                ownedPartCounts,
+                partLevels,
+                selectedParts: safeSelectedParts,
+                selectedSpinDir
+            }));
+        }
+
+        function loadProgress() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (!raw) return;
+                applyState(JSON.parse(raw));
+            } catch (err) {
+                console.warn('Failed to load save data', err);
+            }
+        }
+
+        function openRestartConfirm() {
+            closeLaunchPopup();
+            showPopup(restartConfirmOverlay);
+        }
+
+        function closeRestartConfirm() {
+            hidePopup(restartConfirmOverlay);
+        }
+
+        function confirmRestartGame() {
+            localStorage.clear();
+            isTestMode = false;
+            preTestSelectedParts = null;
+            applyState(getDefaultState());
+            nextOpponentConfig = null;
+            lastRewardText = '';
+            battlePanelOpponentConfig = null;
+            battlePanelOpponentName = 'COM';
+            pendingGachaResult = null;
+            closeLaunchPopup();
+            hidePopup(resultOverlay);
+            hidePopup(restartConfirmOverlay);
+            hidePopup(gachaResultOverlay);
+            clearBattleState();
+            generateOpponent();
+            renderAll();
+            showView('home-view');
+        }
+
+        function restartGame() {
+            openRestartConfirm();
+        }
+
+        function getAvailableParts(type) {
+            return isTestMode ? Object.keys(PARTS[type]) : ownedParts[type];
+        }
+
+        function normalizeSelectedPartsToOwned() {
+            ['ar', 'wd', 'dr'].forEach(type => {
+                if (!ownedParts[type].includes(selectedParts[type])) selectedParts[type] = ownedParts[type][0];
+            });
+        }
+
+        function toggleTestMode() {
+            if (isTestMode) {
+                isTestMode = false;
+                selectedParts = preTestSelectedParts ? { ...preTestSelectedParts } : { ...selectedParts };
+                selectedSpinDir = preTestSpinDir;
+                normalizeSelectedPartsToOwned();
+                preTestSelectedParts = null;
+                saveProgress();
+            } else {
+                preTestSelectedParts = { ...selectedParts };
+                preTestSpinDir = selectedSpinDir;
+                isTestMode = true;
+            }
+            renderAll();
+        }
+
+        class Beyblade {
+            constructor(x, y, config, isPlayer, name) {
+                this.x = x;
+                this.y = y;
+                this.vx = 0;
+                this.vy = 0;
+                this.radius = 24;
+                this.isPlayer = isPlayer;
+                this.name = name;
+                this.angle = 0;
+                this.parts = config.parts;
+                this.useUpgrades = !!config.useUpgrades;
+                this.spinDir = parseInt(config.spinDir);
+                this.stats = this.calculateStats();
+                this.spin = 0;
+                this.maxSpin = 115;
+                this.battleAtkBonus = 0;
+                this.lastOpponentContactTime = performance.now();
+                this.ringOutVulnerableUntil = 0;
+                this.isBurst = false;
+                this.isOut = false;
+            }
+
+            calculateStats() {
+                const ar = this.useUpgrades ? getUpgradedPart('ar', this.parts.ar) : PARTS.ar[this.parts.ar];
+                const wd = this.useUpgrades ? getUpgradedPart('wd', this.parts.wd) : PARTS.wd[this.parts.wd];
+                const dr = this.useUpgrades ? getUpgradedPart('dr', this.parts.dr) : PARTS.dr[this.parts.dr];
+                const abilities = [ar.ability, wd.ability, dr.ability].filter(Boolean);
+                const wgt = ar.wgt + wd.wgt;
+                const wgtStmBonus = Math.min(8, Math.max(0, (wgt - 18) * 0.16));
+                const heavyPenalty = Math.max(0, wgt - 42);
+                const lightBonus = Math.min(0.16, Math.max(0, (24 - wgt) * 0.008));
+                const speedMultiplier = Math.max(0.72, 1 + lightBonus - (heavyPenalty * 0.012));
+                const frictionPenalty = heavyPenalty * 0.00008;
+                const evasion = Math.min(0.24, Math.max(0, (28 - wgt) * 0.012));
+                return {
+                    atk: ar.atk + dr.atk,
+                    stm: ar.stm + wd.stm + wgtStmBonus,
+                    wgt,
+                    speed: dr.speed * speedMultiplier,
+                    friction: dr.friction - frictionPenalty,
+                    drift: dr.drift,
+                    evasion,
+                    color: ar.color,
+                    abilities
+                };
+            }
+
+            hasAbility(ability) {
+                return this.stats.abilities.includes(ability);
+            }
+
+            distanceFromCenter() {
+                const dx = this.x - 300;
+                const dy = this.y - 300;
+                return Math.sqrt(dx * dx + dy * dy);
+            }
+
+            getCurrentAtk() {
+                let atk = this.stats.atk + this.battleAtkBonus;
+                if (this.hasAbility('outerAtk') && this.distanceFromCenter() > 190) atk += 5;
+                return atk;
+            }
+
+            getCurrentStm() {
+                let stm = this.stats.stm;
+                if (this.hasAbility('innerStm') && this.distanceFromCenter() < 135) stm += 5;
+                return stm;
+            }
+
+            launch(dirX, dirY) {
+                this.vx = dirX * this.stats.speed;
+                this.vy = dirY * this.stats.speed;
+                this.spin = 95 + Math.random() * 20;
+                this.maxSpin = Math.max(115, this.spin);
+                this.battleAtkBonus = 0;
+                this.lastOpponentContactTime = performance.now();
+                this.ringOutVulnerableUntil = 0;
+                this.isBurst = false;
+                this.isOut = false;
+            }
+
+            update() {
+                if (this.isBurst || this.isOut) return;
+
+                const now = performance.now();
+                const stmProtection = Math.max(0, Math.min(0.038, this.getCurrentStm() * 0.0009));
+                const driverPenalty = Math.max(-0.002, Math.min(0.006, (0.999 - this.stats.friction) * 0.75));
+                this.spin -= Math.max(0.0015, 0.036 - stmProtection + driverPenalty);
+                if (this.hasAbility('idleRegen') && now - this.lastOpponentContactTime >= 3000) {
+                    this.spin = Math.min(this.maxSpin, this.spin + 0.035);
+                }
+                if (this.spin < 0) this.spin = 0;
+
+                if (this.spin > 0) {
+                    const wobbleFactor = this.spin < 20 ? (22 - this.spin) / 6 : 1;
+                    const distFromCenter = this.distanceFromCenter();
+                    const outerEvasionBonus = distFromCenter > 185 ? this.stats.evasion : 0;
+                    this.vx += (Math.random() - 0.5) * (this.stats.drift + outerEvasionBonus) * 2.2 * wobbleFactor;
+                    this.vy += (Math.random() - 0.5) * (this.stats.drift + outerEvasionBonus) * 2.2 * wobbleFactor;
+                    const dx = 300 - this.x;
+                    const dy = 300 - this.y;
+                    this.vx += dx * 0.0015;
+                    this.vy += dy * 0.0015;
+                    if (this.isPlayer && playerControlIntent && now < playerControlIntent.until) {
+                        const outwardX = -dx / Math.max(1, distFromCenter);
+                        const outwardY = -dy / Math.max(1, distFromCenter);
+                        const progress = (playerControlIntent.until - now) / PLAYER_CONTROL_DURATION;
+                        const response = Math.max(0.52, Math.min(1.32, 1.12 + ((28 - this.stats.wgt) * 0.018)));
+                        const stmStability = Math.max(0.88, Math.min(1.15, 0.96 + (this.getCurrentStm() * 0.004)));
+                        const controlForce = 0.055 * Math.max(0.25, progress) * response * stmStability;
+                        const sign = playerControlIntent.mode === 'outer' ? 1 : -1;
+                        this.vx += outwardX * controlForce * sign;
+                        this.vy += outwardY * controlForce * sign;
+
+                        if (playerControlIntent.mode === 'outer') {
+                            const tangentX = -outwardY * this.spinDir;
+                            const tangentY = outwardX * this.spinDir;
+                            this.vx += tangentX * controlForce * 0.55;
+                            this.vy += tangentY * controlForce * 0.55;
+                        }
+                    }
+                    this.vx *= 0.995;
+                    this.vy *= 0.995;
+                    this.angle += (this.spin / 9.5) * this.spinDir;
+                } else {
+                    this.vx *= 0.96;
+                    this.vy *= 0.96;
+                }
+
+                this.x += this.vx;
+                this.y += this.vy;
+
+                const dist = Math.sqrt(Math.pow(this.x - 300, 2) + Math.pow(this.y - 300, 2));
+                const isRingOutVulnerable = performance.now() < this.ringOutVulnerableUntil;
+                const pocketSize = isRingOutVulnerable ? 126 : 106;
+                const pocketDistance = isRingOutVulnerable ? 266 : 272;
+                const inPocket = dist > pocketDistance && (
+                    (this.x < pocketSize && this.y < pocketSize) ||
+                    (this.x > 600 - pocketSize && this.y < pocketSize) ||
+                    (this.x < pocketSize && this.y > 600 - pocketSize) ||
+                    (this.x > 600 - pocketSize && this.y > 600 - pocketSize)
+                );
+
+                if (inPocket) {
+                    this.isOut = true;
+                    this.spin = 0;
+                    createBurstEffect(this.x, this.y, this.stats.color, false);
+                    return;
+                }
+
+                if (dist > 275) {
+                    const nx = (this.x - 300) / dist;
+                    const ny = (this.y - 300) / dist;
+                    const dot = this.vx * nx + this.vy * ny;
+                    if (dot > 0) {
+                        this.vx -= 1.65 * dot * nx;
+                        this.vy -= 1.65 * dot * ny;
+                        const wallLoss = Math.max(0.08, 0.18 - (this.stats.evasion * 0.3));
+                        this.spin -= wallLoss;
+                        if (this.hasAbility('wallRegen')) {
+                            this.spin = Math.min(this.maxSpin, this.spin + (this.maxSpin * 0.05));
+                        }
+                        createSpark(this.x, this.y);
+                    }
+                    this.x = 300 + nx * 274;
+                    this.y = 300 + ny * 274;
+                }
+            }
+
+            draw() {
+                if (this.isOut || this.isBurst) return;
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                if (this.spin > 0 && this.spin < 15) {
+                    ctx.translate((Math.random()-0.5)*1.2, (Math.random()-0.5)*1.2);
+                }
+                ctx.rotate(this.angle);
+
+                ctx.fillStyle = this.stats.color;
+                const shape = PARTS.ar[this.parts.ar].shape;
+                if (shape === 'triple') {
+                    for(let i=0; i<3; i++) { ctx.rotate((Math.PI * 2) / 3); ctx.fillRect(-9, -25, 18, 15); }
+                } else if (shape === 'square') {
+                    ctx.fillRect(-22, -22, 44, 44);
+                } else {
+                    for(let i=0; i<6; i++) { ctx.rotate((Math.PI * 2) / 6); ctx.fillRect(-4, -28, 8, 18); }
+                }
+                ctx.fillStyle = '#777'; ctx.fillRect(-12, -12, 24, 24);
+                ctx.fillStyle = '#fff'; ctx.fillRect(-5, -5, 10, 10);
+                ctx.fillStyle = '#000'; ctx.font = '12pt "Cubic11"'; ctx.textAlign = 'center';
+                ctx.fillText(this.spinDir === 1 ? 'R' : 'L', 0, 3);
+                ctx.restore();
+
+                if (this.spin > 0) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.font = '12pt "Cubic11"';
+                    ctx.textAlign = 'right';
+                    const dirSymbol = this.spinDir === 1 ? "(R)" : "(L)";
+                    ctx.fillText(`${this.name}${dirSymbol}`, this.x - 22, this.y - 41);
+
+                    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+                    ctx.fillRect(this.x - 20, this.y - 45, 40, 4);
+                    let color = '#22c55e';
+                    if (this.spin < 25) color = '#ef4444';
+                    else if (this.spin < 55) color = '#facc15';
+                    ctx.fillStyle = color;
+                    ctx.fillRect(this.x - 20, this.y - 45, 40 * (Math.min(this.spin, 100) / 100), 4);
+                }
+            }
+        }
+
+        function showView(viewId) {
+            document.querySelectorAll('.view').forEach(view => {
+                view.classList.toggle('active', view.id === viewId);
+                view.style.display = view.id === viewId ? 'block' : 'none';
+            });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === viewId);
+            });
+            if (viewId !== 'battle-view') {
+                isPlacingLaunch = false;
+                playerControlIntent = null;
+                closeLaunchPopup();
+            }
+        }
+
+        function showPopup(el) {
+            popupBackdrop.style.display = 'block';
+            el.style.display = 'block';
+        }
+
+        function hidePopup(el) {
+            el.style.display = 'none';
+            if (
+                launchOverlay.style.display !== 'block' &&
+                resultOverlay.style.display !== 'block' &&
+                restartConfirmOverlay.style.display !== 'block' &&
+                gachaResultOverlay.style.display !== 'block'
+            ) {
+                popupBackdrop.style.display = 'none';
+            }
+        }
+
+        function openLaunchPopup() {
+            if (isGaming || isPlacingLaunch || winnerDecided || resultOverlay.style.display === 'block') return;
+            if (!nextOpponentConfig) generateOpponent();
+            document.getElementById('launch-popup-round').innerText = ROUNDS[roundIndex].name;
+            document.getElementById('launch-popup-opponent').innerText = `VS ${nextOpponentName}`;
+            document.getElementById('launch-opponent-loadout').innerHTML =
+                loadoutCardMarkup('對手配置', nextOpponentConfig, nextOpponentName, false, false);
+            showPopup(launchOverlay);
+        }
+
+        function closeLaunchPopup() {
+            hidePopup(launchOverlay);
+        }
+
+        function getCanvasPoint(evt) {
+            const rect = canvas.getBoundingClientRect();
+            return {
+                x: (evt.clientX - rect.left) * (canvas.width / rect.width),
+                y: (evt.clientY - rect.top) * (canvas.height / rect.height)
+            };
+        }
+
+        function clampLaunchPosition(point) {
+            let x = Math.max(72, Math.min(285, point.x));
+            let y = Math.max(72, Math.min(528, point.y));
+            const dx = x - 300;
+            const dy = y - 300;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const maxDist = 238;
+
+            if (dist > maxDist) {
+                const ratio = maxDist / dist;
+                x = 300 + dx * ratio;
+                y = 300 + dy * ratio;
+            }
+
+            return { x, y };
+        }
+
+        function getLaunchVector(fromX, fromY) {
+            const dx = 300 - fromX;
+            const dy = 300 - fromY;
+            const len = Math.max(1, Math.sqrt(dx * dx + dy * dy));
+            return {
+                x: (dx / len) * 2.9,
+                y: (dy / len) * 2.9
+            };
+        }
+
+        function updateLaunchPositionFromEvent(evt) {
+            pendingLaunchPosition = clampLaunchPosition(getCanvasPoint(evt));
+        }
+
+        function handleCanvasLaunchPointerDown(evt) {
+            if (isGaming && player && !winnerDecided && !isPlacingLaunch) {
+                evt.preventDefault();
+                issuePlayerControl(getCanvasPoint(evt));
+                return;
+            }
+            if (!isPlacingLaunch || isGaming) return;
+            evt.preventDefault();
+            updateLaunchPositionFromEvent(evt);
+            canvas.setPointerCapture?.(evt.pointerId);
+            if (evt.pointerType === 'touch' || evt.pointerType === 'pen') {
+                isDraggingLaunch = true;
+            } else {
+                startBattleAt(pendingLaunchPosition.x, pendingLaunchPosition.y);
+            }
+        }
+
+        function handleCanvasLaunchPointerMove(evt) {
+            if (!isPlacingLaunch || isGaming) return;
+            if (evt.pointerType === 'touch' || evt.pointerType === 'pen') {
+                if (!isDraggingLaunch) return;
+                evt.preventDefault();
+            }
+            updateLaunchPositionFromEvent(evt);
+        }
+
+        function handleCanvasLaunchPointerUp(evt) {
+            if (!isPlacingLaunch || isGaming || !isDraggingLaunch) return;
+            evt.preventDefault();
+            updateLaunchPositionFromEvent(evt);
+            isDraggingLaunch = false;
+            canvas.releasePointerCapture?.(evt.pointerId);
+            startBattleAt(pendingLaunchPosition.x, pendingLaunchPosition.y);
+        }
+
+        function handleCanvasLaunchPointerCancel(evt) {
+            if (!isDraggingLaunch) return;
+            isDraggingLaunch = false;
+            canvas.releasePointerCapture?.(evt.pointerId);
+        }
+
+        function issuePlayerControl(point) {
+            const now = performance.now();
+            if (now < playerControlCooldownUntil) {
+                return;
+            }
+
+            const dx = point.x - 300;
+            const dy = point.y - 300;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            const mode = dist > 165 ? 'outer' : 'inner';
+
+            playerControlIntent = {
+                mode,
+                x: point.x,
+                y: point.y,
+                issuedAt: now,
+                until: now + PLAYER_CONTROL_DURATION
+            };
+            playerControlCooldownUntil = now + PLAYER_CONTROL_COOLDOWN;
+        }
+
+        function drawPlayerControlCue(now) {
+            if (!playerControlIntent || now > playerControlIntent.until) return;
+            const progress = (playerControlIntent.until - now) / PLAYER_CONTROL_DURATION;
+            const radius = playerControlIntent.mode === 'outer' ? 216 : 92;
+            const color = playerControlIntent.mode === 'outer' ? '#38bdf8' : '#22c55e';
+
+            ctx.save();
+            ctx.globalAlpha = 0.18 + progress * 0.24;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 5;
+            ctx.setLineDash([12, 10]);
+            ctx.beginPath();
+            ctx.arc(300, 300, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.globalAlpha = 0.8;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(playerControlIntent.x, playerControlIntent.y, 7 + (1 - progress) * 12, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function drawPlayerControlLabel(now) {
+            if (!player || !playerControlIntent || now > playerControlIntent.until) return;
+            const progress = (playerControlIntent.until - now) / PLAYER_CONTROL_DURATION;
+            const label = playerControlIntent.mode === 'outer' ? '往外圍' : '往內圍';
+            const color = playerControlIntent.mode === 'outer' ? '#38bdf8' : '#22c55e';
+
+            ctx.save();
+            ctx.globalAlpha = Math.max(0.25, Math.min(1, progress * 1.4));
+            ctx.font = '12pt "Cubic11"';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+            ctx.strokeText(label, player.x, player.y + 43);
+            ctx.fillStyle = color;
+            ctx.fillText(label, player.x, player.y + 43);
+            ctx.restore();
+        }
+
+        function savePlayerName() {
+            playerName = document.getElementById('player-name-input').value.trim().toUpperCase() || "PLAYER";
+            saveProgress();
+            renderAll();
+        }
+
+        function createSpark(x, y) {
+            for(let i=0; i<4; i++) {
+                particles.push({
+                    type: 'spark',
+                    x, y, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8,
+                    life: 10, color: '#ffd700', size: 2
+                });
+            }
+        }
+
+        function createBurstEffect(x, y, color, isBurstFinish) {
+            effects.push({ type: 'shockwave', x, y, radius: 10, maxRadius: 80, opacity: 1, life: 30 });
+
+            const debrisCount = isBurstFinish ? 6 : 3;
+            for(let i=0; i<debrisCount; i++) {
+                particles.push({
+                    type: 'debris',
+                    x, y,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    rv: (Math.random() - 0.5) * 0.5,
+                    angle: Math.random() * Math.PI * 2,
+                    life: 100,
+                    color,
+                    size: 8 + Math.random() * 8,
+                    gravity: 0.2
+                });
+            }
+
+            const particleCount = isBurstFinish ? 40 : 15;
+            for(let i=0; i<particleCount; i++) {
+                particles.push({
+                    type: 'pixel',
+                    x, y,
+                    vx: (Math.random() - 0.5) * 12,
+                    vy: (Math.random() - 0.5) * 12,
+                    life: 40 + Math.random() * 30,
+                    color: i % 2 === 0 ? color : '#fff',
+                    size: 3 + Math.random() * 3,
+                    gravity: 0.15
+                });
+            }
+
+            screenShake(isBurstFinish ? 15 : 5);
+        }
+
+        function screenShake(amt) {
+            canvas.style.transform = `translate(${(Math.random()-0.5)*amt}px, ${(Math.random()-0.5)*amt}px)`;
+            setTimeout(() => canvas.style.transform = '', 100);
+        }
+
+        function checkCollision() {
+            if (!player || !enemy || player.isBurst || enemy.isBurst || player.isOut || enemy.isOut) return;
+            const dx = player.x - enemy.x;
+            const dy = player.y - enemy.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < player.radius + enemy.radius) {
+                const nx = dx / dist; const ny = dy / dist;
+                const rvx = player.vx - enemy.vx; const rvy = player.vy - enemy.vy;
+                const velNormal = rvx * nx + rvy * ny;
+                if (velNormal > 0) return;
+
+                const impulse = 2.0;
+                const force = -(1 + impulse) * velNormal;
+                const totalW = player.stats.wgt + enemy.stats.wgt;
+                const playerPush = Math.pow(player.stats.wgt / totalW, 1.25);
+                const enemyPush = Math.pow(enemy.stats.wgt / totalW, 1.25);
+
+                player.vx += force * nx * enemyPush;
+                player.vy += force * ny * enemyPush;
+                enemy.vx -= force * nx * playerPush;
+                enemy.vy -= force * ny * playerPush;
+
+                const impactFactor = Math.abs(force);
+                const now = performance.now();
+                player.lastOpponentContactTime = now;
+                enemy.lastOpponentContactTime = now;
+                if (player.hasAbility('hitAtkUp')) player.battleAtkBonus += 1;
+                if (enemy.hasAbility('hitAtkUp')) enemy.battleAtkBonus += 1;
+
+                const playerAtk = player.getCurrentAtk();
+                const enemyAtk = enemy.getCurrentAtk();
+                const playerSmashPower = playerAtk * player.stats.wgt;
+                const enemySmashPower = enemyAtk * enemy.stats.wgt;
+                const playerSmashBonus = Math.min(0.45, Math.max(0, (playerSmashPower - 900) / 2200));
+                const enemySmashBonus = Math.min(0.45, Math.max(0, (enemySmashPower - 900) / 2200));
+                enemy.vx -= force * nx * playerPush * playerSmashBonus;
+                enemy.vy -= force * ny * playerPush * playerSmashBonus;
+                player.vx += force * nx * enemyPush * enemySmashBonus;
+                player.vy += force * ny * enemyPush * enemySmashBonus;
+
+                if (player.hasAbility('doubleAtkRingOut') && playerAtk >= enemyAtk * 2) {
+                    enemy.ringOutVulnerableUntil = now + 1800;
+                }
+                if (enemy.hasAbility('doubleAtkRingOut') && enemyAtk >= playerAtk * 2) {
+                    player.ringOutVulnerableUntil = now + 1800;
+                }
+                if (playerSmashPower >= enemySmashPower * 1.25 && playerSmashPower > 950) {
+                    enemy.ringOutVulnerableUntil = Math.max(enemy.ringOutVulnerableUntil, now + 900);
+                }
+                if (enemySmashPower >= playerSmashPower * 1.25 && enemySmashPower > 950) {
+                    player.ringOutVulnerableUntil = Math.max(player.ringOutVulnerableUntil, now + 900);
+                }
+
+                if (player.spinDir !== enemy.spinDir) {
+                    const absorbAmount = impactFactor * 0.4;
+                    const playerAbsorbBoost = 1 + (player.stats.evasion * 0.8);
+                    const enemyAbsorbBoost = 1 + (enemy.stats.evasion * 0.8);
+                    if (player.spin > enemy.spin) {
+                        player.spin -= absorbAmount * 1.2;
+                        enemy.spin += absorbAmount * 0.8 * enemyAbsorbBoost;
+                    } else {
+                        enemy.spin -= absorbAmount * 1.2;
+                        player.spin += absorbAmount * 0.8 * playerAbsorbBoost;
+                    }
+                } else {
+                    player.spin -= (impactFactor * 0.2) + (enemyAtk * 0.1);
+                    enemy.spin -= (impactFactor * 0.2) + (playerAtk * 0.1);
+                }
+
+                const smashBurstBonus = Math.max(playerSmashBonus, enemySmashBonus) * 0.12;
+                if (impactFactor > 9.2) {
+                    const burstChance = Math.min(0.42, ((impactFactor - 9.2) * 0.035) + smashBurstBonus);
+                    if (Math.random() < burstChance && player.spin < 34) {
+                        player.isBurst = true;
+                        createBurstEffect(player.x, player.y, player.stats.color, true);
+                    }
+                    if (Math.random() < burstChance && enemy.spin < 34) {
+                        enemy.isBurst = true;
+                        createBurstEffect(enemy.x, enemy.y, enemy.stats.color, true);
+                    }
+                }
+
+                createSpark((player.x + enemy.x)/2, (player.y + enemy.y)/2);
+                screenShake(impactFactor);
+            }
+        }
+
+        function makeConfigFromSelected() {
+            return { parts: { ...selectedParts }, spinDir: selectedSpinDir, useUpgrades: true };
+        }
+
+        function cloneConfig(config) {
+            return {
+                parts: { ...config.parts },
+                spinDir: parseInt(config.spinDir),
+                useUpgrades: !!config.useUpgrades
+            };
+        }
+
+        function randomPartByRarity(type, allowedRarities) {
+            const ids = Object.keys(PARTS[type]).filter(id => allowedRarities.includes(PARTS[type][id].rarity));
+            return ids[Math.floor(Math.random() * ids.length)];
+        }
+
+        function getSellValue(part) {
+            return SELL_VALUES[part.rarity] || 0;
+        }
+
+        function getPartLevel(type, id) {
+            return partLevels[type]?.[id] || 0;
+        }
+
+        function getPartCount(type, id) {
+            return ownedPartCounts[type]?.[id] || 0;
+        }
+
+        function ensureOwnedPart(type, id, amount = 1) {
+            if (!ownedParts[type].includes(id)) ownedParts[type].push(id);
+            ownedPartCounts[type][id] = getPartCount(type, id) + amount;
+        }
+
+        function getUpgradedPart(type, id) {
+            const base = PARTS[type][id];
+            const level = getPartLevel(type, id);
+            const part = { ...base };
+
+            if (level <= 0) return part;
+            if (type === 'ar') {
+                part.atk += level;
+                part.stm += level;
+                part.wgt += level;
+            } else if (type === 'wd') {
+                part.stm += level;
+                part.wgt += level;
+            } else if (type === 'dr') {
+                part.atk += level;
+                part.speed += level;
+            }
+            return part;
+        }
+
+        function getPartStatsText(type, id) {
+            const part = getUpgradedPart(type, id);
+            if (type === 'ar') return `ATK ${formatStat(part.atk)} / STM ${formatStat(part.stm)} / WGT ${formatStat(part.wgt)}`;
+            if (type === 'wd') return `STM ${formatStat(part.stm)} / WGT ${formatStat(part.wgt)}`;
+            return `ATK ${formatStat(part.atk)} / SPEED ${formatStat(part.speed)}`;
+        }
+
+        function formatStat(value) {
+            const rounded = Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+            return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+        }
+
+        function generateOpponent() {
+            const difficulty = roundIndex;
+            const rarityPool = difficulty === 0 ? ['N'] : difficulty === 1 ? ['N', 'R'] : difficulty === 2 ? ['N', 'R', 'SR'] : ['N', 'R', 'SR', 'SSR'];
+            nextOpponentName = ['COMET', 'RIVAL', 'BLAZE', 'CHAMP'][difficulty] || 'COM';
+            nextOpponentConfig = {
+                parts: {
+                    ar: randomPartByRarity('ar', rarityPool),
+                    wd: randomPartByRarity('wd', rarityPool),
+                    dr: randomPartByRarity('dr', rarityPool)
+                },
+                spinDir: Math.random() > 0.5 ? 1 : -1
+            };
+        }
+
+        function launchGame() {
+            if (isGaming) return;
+            if (!nextOpponentConfig) generateOpponent();
+            closeLaunchPopup();
+            isPlacingLaunch = true;
+            pendingLaunchPosition = { x: 165, y: 300 };
+            statusEl.innerText = '點擊左半邊場地選擇發射位置';
+        }
+
+        function startBattleAt(x, y) {
+            if (isGaming) return;
+            isPlacingLaunch = false;
+            isDraggingLaunch = false;
+            battlePanelOpponentConfig = cloneConfig(nextOpponentConfig);
+            battlePanelOpponentName = nextOpponentName;
+            renderBattleLoadouts();
+
+            player = new Beyblade(x, y, makeConfigFromSelected(), true, playerName);
+            enemy = new Beyblade(435, 300, battlePanelOpponentConfig, false, battlePanelOpponentName);
+            const playerVector = getLaunchVector(x, y);
+            const enemyVector = getLaunchVector(enemy.x, enemy.y);
+            player.launch(playerVector.x, playerVector.y);
+            enemy.launch(enemyVector.x, enemyVector.y);
+            isGaming = true;
+            winnerDecided = false;
+            playerControlIntent = null;
+            playerControlCooldownUntil = 0;
+            statusEl.innerText = `${ROUNDS[roundIndex].name} BATTLE!`;
+        }
+
+        function applyBattleOutcome(winner) {
+            if (winner === 'player') {
+                const reward = ROUNDS[roundIndex].reward;
+                score += reward;
+                lastRewardText = `獲得 ${reward} 分`;
+
+                if (roundIndex === ROUNDS.length - 1) {
+                    score += CHAMPION_BONUS;
+                    const trophyName = `Pixel Cup #${tournamentIndex}`;
+                    trophies.push(trophyName);
+                    lastRewardText = `冠軍! 獲得 ${reward + CHAMPION_BONUS} 分與 ${trophyName}`;
+                    tournamentIndex++;
+                    roundIndex = 0;
+                } else {
+                    roundIndex++;
+                }
+                generateOpponent();
+            } else if (winner === 'enemy') {
+                lastRewardText = '落敗，保留進度，可再次挑戰同一位對手';
+            } else {
+                lastRewardText = '平手，階段不變';
+            }
+            saveProgress();
+            renderAll();
+        }
+
+        function showResult(winner, reason) {
+            winnerDecided = true;
+            closeLaunchPopup();
+            applyBattleOutcome(winner);
+            setTimeout(() => {
+                showPopup(resultOverlay);
+                const title = document.getElementById('result-title');
+                const reasonText = document.getElementById('result-reason');
+                const rewardText = document.getElementById('result-reward');
+                const equipBtn = document.getElementById('result-equip-btn');
+                const continueBtn = document.getElementById('continue-next-battle-btn');
+                reasonText.innerText = reason;
+                rewardText.innerText = lastRewardText;
+                equipBtn.style.display = winner === 'enemy' ? 'block' : 'none';
+                continueBtn.innerText = winner === 'player' ? '下一場' : winner === 'enemy' ? '再挑戰' : '重賽';
+                if (winner === 'player') { title.innerText = `${playerName} WIN!`; title.style.color = "#22c55e"; }
+                else if (winner === 'enemy') { title.innerText = "COM WIN!"; title.style.color = "#ef4444"; }
+                else { title.innerText = "DRAW!"; title.style.color = "#fff"; }
+            }, 1500);
+        }
+
+        function clearBattleState() {
+            isGaming = false;
+            winnerDecided = false;
+            isPlacingLaunch = false;
+            isDraggingLaunch = false;
+            playerControlIntent = null;
+            playerControlCooldownUntil = 0;
+            player = null;
+            enemy = null;
+            particles = [];
+            effects = [];
+            hidePopup(resultOverlay);
+            statusEl.innerText = `${ROUNDS[roundIndex].name} READY`;
+            renderAll();
+        }
+
+        function continueNextBattle() {
+            clearBattleState();
+            if (document.getElementById('battle-view').classList.contains('active')) {
+                openLaunchPopup();
+            }
+        }
+
+        function closeResultPopup() {
+            clearBattleState();
+        }
+
+        function goAdjustEquipmentAfterLoss() {
+            clearBattleState();
+            showView('equip-view');
+        }
+
+        function resetGame() {
+            continueNextBattle();
+        }
+
+        function selectSpinDirection(value) {
+            selectedSpinDir = parseInt(value) === -1 ? -1 : 1;
+            updateSelectedEquipment();
+        }
+
+        function selectPart(type, id) {
+            if (!PARTS[type]?.[id] || !getAvailableParts(type).includes(id)) return;
+            selectedParts[type] = id;
+            updateSelectedEquipment();
+        }
+
+        function updateSelectedEquipment() {
+            if (!isTestMode) saveProgress();
+            renderEquipOptions();
+            updateStats();
+            renderHeader();
+            renderBattleLoadouts();
+        }
+
+        function updateStats() {
+            const tempBey = new Beyblade(0, 0, makeConfigFromSelected(), true, playerName);
+            document.getElementById('stat-atk').innerText = `ATK ${formatStat(tempBey.stats.atk)}`;
+            document.getElementById('stat-stm').innerText = `STM ${formatStat(tempBey.stats.stm)}`;
+            document.getElementById('stat-wgt').innerText = `WGT ${formatStat(tempBey.stats.wgt)}`;
+            document.getElementById('bar-atk').style.width = Math.min(100, (tempBey.stats.atk / 55 * 100)) + '%';
+            document.getElementById('bar-stm').style.width = Math.min(100, (tempBey.stats.stm / 55 * 100)) + '%';
+            document.getElementById('bar-wgt').style.width = Math.min(100, (tempBey.stats.wgt / 70 * 100)) + '%';
+            document.getElementById('current-loadout').innerHTML = `
+                ${miniLoadoutMarkup(makeConfigFromSelected())}
+            `;
+        }
+
+        function partImageMarkup(type, id, locked = false) {
+            if (locked) return '<div class="part-art locked">?</div>';
+            const part = PARTS[type][id];
+            const color = PART_ART_COLORS[id] || part.color || '#fff';
+            const shine = part.rarity === 'SSR' ? '#fed7aa' : part.rarity === 'SR' ? '#fef08a' : part.rarity === 'R' ? '#bae6fd' : '#d9f99d';
+            const stroke = part.rarity === 'SSR' ? '#fb923c' : part.rarity === 'SR' ? '#facc15' : part.rarity === 'R' ? '#38bdf8' : '#86efac';
+            const body = type === 'ar' ? attackRingArt(id, color, shine) : type === 'wd' ? weightDiskArt(id, color, shine) : driverArt(id, color, shine);
+
+            return `
+                <div class="part-art" title="[${part.rarity}] ${part.name}">
+                    <svg viewBox="0 0 64 64" aria-label="${part.name}" role="img">
+                        <rect x="2" y="2" width="60" height="60" fill="#050505" stroke="${stroke}" stroke-width="2"/>
+                        ${body}
+                    </svg>
+                </div>
+            `;
+        }
+
+        function attackRingArt(id, color, shine) {
+            const center = `<rect x="24" y="24" width="16" height="16" fill="#d4d4d8"/><rect x="29" y="29" width="6" height="6" fill="#111"/>`;
+            if (id === 'square' || id === 'fortress') {
+                const guards = id === 'fortress'
+                    ? '<rect x="8" y="8" width="12" height="12" fill="#c4b5fd"/><rect x="44" y="8" width="12" height="12" fill="#c4b5fd"/><rect x="8" y="44" width="12" height="12" fill="#c4b5fd"/><rect x="44" y="44" width="12" height="12" fill="#c4b5fd"/>'
+                    : '';
+                return `<rect x="14" y="14" width="36" height="36" fill="${color}"/><rect x="18" y="18" width="28" height="28" fill="#111"/><rect x="22" y="22" width="20" height="20" fill="${color}"/>${guards}${center}`;
+            }
+            if (id === 'dragon') {
+                return `<polygon points="32,5 39,22 58,14 46,31 58,50 38,42 32,59 26,42 6,50 18,31 6,14 25,22" fill="${color}"/><polygon points="32,13 37,27 50,22 41,33 49,46 35,40 32,52 29,40 15,46 23,33 14,22 27,27" fill="#7c2d12"/>${center}<rect x="31" y="7" width="3" height="8" fill="${shine}"/>`;
+            }
+            if (id === 'comet') {
+                return `<polygon points="32,7 38,24 56,21 43,34 49,52 32,43 15,52 21,34 8,21 26,24" fill="${color}"/><rect x="13" y="13" width="8" height="8" fill="${shine}"/><rect x="45" y="44" width="7" height="7" fill="${shine}"/>${center}`;
+            }
+            return `<rect x="28" y="6" width="8" height="22" fill="${color}"/><rect x="42" y="36" width="18" height="8" fill="${color}"/><rect x="4" y="36" width="18" height="8" fill="${color}"/><rect x="23" y="13" width="18" height="8" fill="${shine}"/>${center}`;
+        }
+
+        function weightDiskArt(id, color, shine) {
+            if (id === 'meteor') {
+                return `<rect x="12" y="12" width="40" height="40" fill="${color}"/><rect x="18" y="18" width="28" height="28" fill="#111"/><rect x="26" y="4" width="12" height="12" fill="${shine}"/><rect x="48" y="26" width="12" height="12" fill="${shine}"/><rect x="26" y="48" width="12" height="12" fill="${shine}"/><rect x="4" y="26" width="12" height="12" fill="${shine}"/><rect x="28" y="28" width="8" height="8" fill="#d4d4d8"/>`;
+            }
+            if (id === 'balance') {
+                return `<rect x="10" y="22" width="44" height="20" fill="${color}"/><rect x="22" y="10" width="20" height="44" fill="${color}"/><rect x="18" y="18" width="28" height="28" fill="#111"/><rect x="25" y="25" width="14" height="14" fill="${shine}"/>`;
+            }
+            const size = id === 'heavy' ? 44 : id === 'light' ? 32 : 38;
+            const offset = (64 - size) / 2;
+            return `<rect x="${offset}" y="${offset}" width="${size}" height="${size}" fill="${color}"/><rect x="${offset + 8}" y="${offset + 8}" width="${size - 16}" height="${size - 16}" fill="#111"/><rect x="28" y="28" width="8" height="8" fill="${shine}"/><rect x="${offset + 4}" y="${offset + 4}" width="8" height="8" fill="#fff" opacity="0.45"/>`;
+        }
+
+        function driverArt(id, color, shine) {
+            if (id === 'accel') {
+                return `<rect x="20" y="8" width="24" height="16" fill="${shine}"/><rect x="16" y="24" width="32" height="18" fill="${color}"/><rect x="22" y="42" width="20" height="8" fill="#d4d4d8"/><rect x="26" y="50" width="12" height="8" fill="${color}"/><rect x="8" y="26" width="8" height="8" fill="${shine}"/><rect x="48" y="26" width="8" height="8" fill="${shine}"/>`;
+            }
+            if (id === 'needle') {
+                return `<rect x="20" y="10" width="24" height="14" fill="${color}"/><rect x="18" y="24" width="28" height="16" fill="#d4d4d8"/><rect x="28" y="40" width="8" height="8" fill="${color}"/><polygon points="32,58 25,48 39,48" fill="${shine}"/>`;
+            }
+            if (id === 'rubber') {
+                return `<rect x="17" y="12" width="30" height="16" fill="#374151"/><rect x="14" y="28" width="36" height="16" fill="${color}"/><rect x="20" y="44" width="24" height="10" fill="#991b1b"/><rect x="26" y="54" width="12" height="5" fill="#111"/>`;
+            }
+            if (id === 'flat') {
+                return `<rect x="20" y="12" width="24" height="18" fill="${color}"/><rect x="16" y="30" width="32" height="16" fill="#d4d4d8"/><rect x="14" y="46" width="36" height="8" fill="${shine}"/>`;
+            }
+            return `<rect x="21" y="10" width="22" height="18" fill="${color}"/><rect x="18" y="28" width="28" height="14" fill="#d4d4d8"/><polygon points="32,58 22,42 42,42" fill="${shine}"/>`;
+        }
+
+        function miniLoadoutItem(type, id, useUpgradeLevel = true) {
+            const part = PARTS[type][id];
+            const level = useUpgradeLevel ? getPartLevel(type, id) : 0;
+            return `
+                <span class="mini-loadout-item">
+                    ${partImageMarkup(type, id)}
+                    <span>${part.name} Lv.${level}</span>
+                </span>
+            `;
+        }
+
+        function miniLoadoutMarkup(config) {
+            return `
+                <div class="mini-loadout">
+                    ${miniLoadoutItem('ar', config.parts.ar, config.useUpgrades)}
+                    <span class="mini-loadout-separator">/</span>
+                    ${miniLoadoutItem('wd', config.parts.wd, config.useUpgrades)}
+                    <span class="mini-loadout-separator">/</span>
+                    ${miniLoadoutItem('dr', config.parts.dr, config.useUpgrades)}
+                </div>
+            `;
+        }
+
+        function drawEquipment() {
+            if (score < DRAW_COST) {
+                document.getElementById('gacha-result').innerText = '分數不足，需要300分。';
+                return;
+            }
+            score -= DRAW_COST;
+            const roll = Math.random();
+            const rarity = roll < 0.03 ? 'SSR' : roll < 0.11 ? 'SR' : roll < 0.38 ? 'R' : 'N';
+            const type = ['ar', 'wd', 'dr'][Math.floor(Math.random() * 3)];
+            const candidates = Object.keys(PARTS[type]).filter(id => PARTS[type][id].rarity === rarity);
+            const partId = candidates[Math.floor(Math.random() * candidates.length)];
+            const alreadyOwned = ownedParts[type].includes(partId);
+
+            const part = PARTS[type][partId];
+            pendingGachaResult = { type, partId, alreadyOwned };
+            const sellValue = getSellValue(part);
+            const resultText = `${alreadyOwned ? '重複獲得' : '新裝備'}: [${part.rarity}] ${PART_TYPE_LABELS[type]} - ${part.name}`;
+            document.getElementById('gacha-result').innerText = resultText;
+            document.getElementById('gacha-popup-content').innerHTML = `
+                ${partImageMarkup(type, partId)}
+                <div class="rarity-${part.rarity.toLowerCase()} mb-2">[${part.rarity}] ${part.name}</div>
+                <div>${PART_TYPE_LABELS[type]}</div>
+                ${part.ability ? `<div class="text-orange-300 mt-2">${ABILITY_LABELS[part.ability]}</div>` : ''}
+                <div class="text-green-400 mt-4">賣出價格: ${sellValue} 分</div>
+            `;
+            saveProgress();
+            renderAll();
+            showPopup(gachaResultOverlay);
+        }
+
+        function confirmGachaResult() {
+            if (!pendingGachaResult) return;
+            const { type, partId, alreadyOwned } = pendingGachaResult;
+            const part = PARTS[type][partId];
+            ensureOwnedPart(type, partId, 1);
+            if (!alreadyOwned) {
+                document.getElementById('gacha-result').innerText = `已加入裝備庫: [${part.rarity}] ${part.name}`;
+            } else {
+                document.getElementById('gacha-result').innerText = `已加入重複裝備: [${part.rarity}] ${part.name} x${getPartCount(type, partId)}`;
+            }
+            pendingGachaResult = null;
+            hidePopup(gachaResultOverlay);
+            saveProgress();
+            renderAll();
+        }
+
+        function sellGachaResult() {
+            if (!pendingGachaResult) return;
+            const { type, partId } = pendingGachaResult;
+            const part = PARTS[type][partId];
+            const sellValue = getSellValue(part);
+            score += sellValue;
+            document.getElementById('gacha-result').innerText = `已賣出 [${part.rarity}] ${part.name}，獲得 ${sellValue} 分`;
+            pendingGachaResult = null;
+            hidePopup(gachaResultOverlay);
+            saveProgress();
+            renderAll();
+        }
+
+        function renderHeader() {
+            document.getElementById('sidebar-name').innerText = playerName;
+            document.getElementById('sidebar-score').innerText = score;
+            document.getElementById('battle-nav-btn').innerText = `戰鬥(${ROUNDS[roundIndex].name})`;
+            document.getElementById('trophy-nav-btn').innerText = `獎杯(${trophies.length})`;
+            document.getElementById('battle-round').innerText = ROUNDS[roundIndex].name;
+            document.getElementById('battle-reward').innerText = ROUNDS[roundIndex].reward;
+            document.getElementById('draw-btn').disabled = score < DRAW_COST;
+            const testBtn = document.getElementById('test-mode-btn');
+            testBtn.innerText = isTestMode ? '退出測驗模式' : '測驗模式';
+            testBtn.classList.toggle('active', isTestMode);
+            statusEl.innerText = isGaming ? statusEl.innerText : `${ROUNDS[roundIndex].name} READY`;
+        }
+
+        function statBarMarkup(label, value, max, color) {
+            const width = Math.max(0, Math.min(100, (value / max) * 100));
+            return `
+                <div class="compact-stat">
+                    <div class="stat-bar labeled-stat"><div class="stat-fill" style="width: ${width}%; background: ${color};"></div><span>${label} ${formatStat(value)}</span></div>
+                </div>
+            `;
+        }
+
+        function loadoutCardMarkup(title, config, name, showImages = false, showName = true) {
+            const temp = new Beyblade(0, 0, config, false, name);
+            return `
+                <div class="part-card">
+                    <div class="text-yellow-400 mb-2">${title}</div>
+                    ${showImages ? `
+                        <div class="loadout-art-row">
+                            ${partImageMarkup('ar', config.parts.ar)}
+                            ${partImageMarkup('wd', config.parts.wd)}
+                            ${partImageMarkup('dr', config.parts.dr)}
+                        </div>
+                    ` : ''}
+                    ${showName ? `<div>名稱: ${name}</div>` : ''}
+                    <div>旋轉: ${config.spinDir === 1 ? '右旋' : '左旋'}</div>
+                    ${miniLoadoutMarkup(config)}
+                    ${temp.stats.abilities.length ? `<div class="text-orange-300">特殊: ${temp.stats.abilities.map(ability => ABILITY_LABELS[ability]).join(' / ')}</div>` : ''}
+                    ${statBarMarkup('ATK', temp.stats.atk, 55, '#ef4444')}
+                    ${statBarMarkup('STM', temp.stats.stm, 55, '#38bdf8')}
+                    ${statBarMarkup('WGT', temp.stats.wgt, 70, '#facc15')}
+                </div>
+            `;
+        }
+
+        function renderBattleLoadouts() {
+            const opponentMarkup = battlePanelOpponentConfig
+                ? loadoutCardMarkup('對手配置', battlePanelOpponentConfig, battlePanelOpponentName)
+                : '<div class="part-card locked">按「準備發射」查看下一個對手。按下 GO SHOOT 後，這裡才會更新成該場對手。</div>';
+            document.getElementById('battle-loadouts').innerHTML =
+                loadoutCardMarkup('玩家配置', makeConfigFromSelected(), playerName) +
+                opponentMarkup;
+        }
+
+        function renderEquipOptions() {
+            document.getElementById('equip-spin-options').innerHTML = [1, -1].map(value => `
+                <button class="equip-option ${selectedSpinDir === value ? 'selected' : ''}" onclick="selectSpinDirection(${value})">
+                    <div class="spin-icon">${value === 1 ? 'R' : 'L'}</div>
+                    <div>${value === 1 ? '右旋' : '左旋'}</div>
+                </button>
+            `).join('');
+
+            ['ar', 'wd', 'dr'].forEach(type => {
+                document.getElementById(`equip-${type}-options`).innerHTML = getAvailableParts(type).map(id => {
+                    const part = PARTS[type][id];
+                    const level = getPartLevel(type, id);
+                    const count = getPartCount(type, id);
+                    return `
+                        <button class="equip-option ${selectedParts[type] === id ? 'selected' : ''}" onclick="selectPart('${type}', '${id}')">
+                            ${partImageMarkup(type, id)}
+                            <div class="rarity-${part.rarity.toLowerCase()}">[${part.rarity}]</div>
+                            <div>${part.name}</div>
+                            <div>Lv.${level}${count ? ` / x${count}` : ''}</div>
+                            ${part.ability ? `<div class="text-orange-300">${ABILITY_LABELS[part.ability]}</div>` : ''}
+                        </button>
+                    `;
+                }).join('');
+            });
+            updateStats();
+        }
+
+        function renderLibrary() {
+            const container = document.getElementById('library-list');
+            container.innerHTML = Object.keys(PARTS).map(type => {
+                const cards = Object.keys(PARTS[type]).map(id => {
+                    const part = PARTS[type][id];
+                    const actuallyOwned = ownedParts[type].includes(id);
+                    const owned = isTestMode || actuallyOwned;
+                    const count = getPartCount(type, id);
+                    const level = getPartLevel(type, id);
+                    const canSell = actuallyOwned && (count > 1 || selectedParts[type] !== id) && (count > 1 || ownedParts[type].length > 1);
+                    const canUpgrade = actuallyOwned && count >= 2;
+                    const stats = getPartStatsText(type, id);
+                    return `
+                        <div class="part-card ${owned ? '' : 'locked'}">
+                            ${partImageMarkup(type, id, !owned)}
+                            <div class="rarity-${part.rarity.toLowerCase()}">[${part.rarity}] ${owned ? part.name : '?'}</div>
+                            <div>${PART_TYPE_LABELS[type]}</div>
+                            ${owned ? `<div>Lv.${level} / 持有 x${count || 0}</div>` : ''}
+                            <div>${owned ? stats : '???'}</div>
+                            ${owned && part.ability ? `<div class="text-orange-300">${ABILITY_LABELS[part.ability]}</div>` : ''}
+                            ${canUpgrade ? `<button class="mt-3" onclick="upgradeOwnedPart('${type}', '${id}')">升級裝備</button>` : ''}
+                            ${canSell ? `<button class="secondary-btn mt-3" onclick="sellOwnedPart('${type}', '${id}')">賣出 +${getSellValue(part)}</button>` : ''}
+                            ${actuallyOwned && selectedParts[type] === id ? '<div class="text-yellow-400 mt-3">目前裝備中</div>' : ''}
+                        </div>
+                    `;
+                }).join('');
+                return `<div><h3 class="text-[10px] text-yellow-400 mb-3">${PART_TYPE_LABELS[type]}</h3><div class="grid-cards">${cards}</div></div>`;
+            }).join('');
+        }
+
+        function sellOwnedPart(type, id) {
+            if (!ownedParts[type]?.includes(id)) return;
+            const count = getPartCount(type, id);
+            if (count <= 1 && selectedParts[type] === id) return;
+            if (count <= 1 && ownedParts[type].length <= 1) return;
+
+            const part = PARTS[type][id];
+            const sellValue = getSellValue(part);
+            ownedPartCounts[type][id] = count - 1;
+            if (ownedPartCounts[type][id] <= 0) {
+                delete ownedPartCounts[type][id];
+                delete partLevels[type][id];
+                ownedParts[type] = ownedParts[type].filter(partId => partId !== id);
+            }
+            score += sellValue;
+            document.getElementById('gacha-result').innerText = `已賣出 [${part.rarity}] ${part.name}，獲得 ${sellValue} 分`;
+            saveProgress();
+            renderAll();
+        }
+
+        function upgradeOwnedPart(type, id) {
+            if (!ownedParts[type]?.includes(id) || getPartCount(type, id) < 2) return;
+
+            ownedPartCounts[type][id] -= 1;
+            partLevels[type][id] = getPartLevel(type, id) + 1;
+            const part = PARTS[type][id];
+            document.getElementById('gacha-result').innerText = `[${part.rarity}] ${part.name} 已升級至 Lv.${partLevels[type][id]}`;
+            saveProgress();
+            renderAll();
+        }
+
+        function renderTrophies() {
+            const container = document.getElementById('trophy-list');
+            if (trophies.length === 0) {
+                container.innerHTML = '<div class="part-card locked">尚未獲得獎杯。贏下決賽就能得到第一座獎杯。</div>';
+                return;
+            }
+            container.innerHTML = trophies.map(name => `
+                <div class="part-card">
+                    <div class="text-2xl mb-3">🏆</div>
+                    <div class="text-yellow-400">${name}</div>
+                    <div>冠軍紀錄</div>
+                </div>
+            `).join('');
+        }
+
+        function renderOpponent() {
+            if (!nextOpponentConfig) generateOpponent();
+            const cfg = nextOpponentConfig;
+            document.getElementById('opponent-info').innerHTML = `
+                <div class="part-card">
+                    <div class="text-yellow-400 mb-2">${nextOpponentName}</div>
+                    <div>階段: ${ROUNDS[roundIndex].name}</div>
+                    <div>旋轉: ${cfg.spinDir === 1 ? '右旋' : '左旋'}</div>
+                </div>
+                ${loadoutCardMarkup('對手陀螺', cfg, nextOpponentName, true)}
+            `;
+        }
+
+        function renderAll() {
+            renderHeader();
+            renderEquipOptions();
+            renderBattleLoadouts();
+            renderLibrary();
+            renderTrophies();
+            renderOpponent();
+            updateMobileLayoutOffsets();
+        }
+
+        function updateMobileLayoutOffsets() {
+            requestAnimationFrame(() => {
+                const sidebar = document.querySelector('.sidebar');
+                if (!sidebar) return;
+                if (window.matchMedia('(max-width: 860px)').matches) {
+                    document.documentElement.style.setProperty('--mobile-sidebar-height', `${Math.ceil(sidebar.getBoundingClientRect().height)}px`);
+                } else {
+                    document.documentElement.style.removeProperty('--mobile-sidebar-height');
+                }
+            });
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath(); ctx.arc(300, 300, 280, 0, Math.PI * 2);
+            ctx.fillStyle = '#222'; ctx.fill();
+            ctx.strokeStyle = '#444'; ctx.lineWidth = 15; ctx.stroke();
+            const s = 110; ctx.fillStyle = '#111';
+            ctx.fillRect(0, 0, s, s); ctx.fillRect(490, 0, s, s);
+            ctx.fillRect(0, 490, s, s); ctx.fillRect(490, 490, s, s);
+
+            if (isPlacingLaunch) {
+                ctx.save();
+                ctx.globalAlpha = 0.35;
+                ctx.fillStyle = '#22c55e';
+                ctx.beginPath();
+                ctx.arc(300, 300, 238, Math.PI / 2, Math.PI * 1.5);
+                ctx.lineTo(300, 300);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                ctx.arc(pendingLaunchPosition.x, pendingLaunchPosition.y, 30, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = '#fff';
+                ctx.font = '12pt "Cubic11"';
+                ctx.textAlign = 'center';
+                ctx.fillText('LAUNCH', pendingLaunchPosition.x, pendingLaunchPosition.y - 38);
+                ctx.restore();
+            }
+
+            drawPlayerControlCue(performance.now());
+
+            for (let i = effects.length - 1; i >= 0; i--) {
+                const eff = effects[i];
+                if (eff.type === 'shockwave') {
+                    eff.radius += (eff.maxRadius - eff.radius) * 0.1;
+                    eff.opacity -= 0.04;
+                    ctx.beginPath();
+                    ctx.arc(eff.x, eff.y, eff.radius, 0, Math.PI * 2);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${eff.opacity})`;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                    if (eff.opacity <= 0) effects.splice(i, 1);
+                }
+            }
+
+            if (player && enemy) {
+                player.update(); enemy.update();
+                checkCollision();
+                player.draw(); enemy.draw();
+                drawPlayerControlLabel(performance.now());
+
+                if (isGaming && !winnerDecided) {
+                    const playerDefeatedByImpact = player.isBurst || player.isOut;
+                    const enemyDefeatedByImpact = enemy.isBurst || enemy.isOut;
+
+                    if (playerDefeatedByImpact && enemyDefeatedByImpact) showResult('draw', '雙方同時出局，重賽 (Draw)');
+                    else if (player.isBurst) showResult('enemy', '爆裂勝利 (Burst Finish!)');
+                    else if (enemy.isBurst) showResult('player', '爆裂勝利 (Burst Finish!)');
+                    else if (player.isOut) showResult('enemy', '擊出場外 (Over Finish!)');
+                    else if (enemy.isOut) showResult('player', '擊出場外 (Over Finish!)');
+                    else if (player.spin <= 0 && enemy.spin <= 0) showResult('draw', '同時停止 (Draw)');
+                    else if (player.spin <= 0) showResult('enemy', '持久勝利 (Spin Finish)');
+                    else if (enemy.spin <= 0) showResult('player', '持久勝利 (Spin Finish)');
+                }
+            }
+
+            for(let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx; p.y += p.vy;
+                if (p.gravity) p.vy += p.gravity;
+                p.life--;
+
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                if (p.type === 'debris') {
+                    p.angle += p.rv;
+                    ctx.rotate(p.angle);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(-p.size/2, -p.size/2, p.size, p.size);
+                } else {
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+                }
+                ctx.restore();
+
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        canvas.addEventListener('pointerdown', handleCanvasLaunchPointerDown);
+        canvas.addEventListener('pointermove', handleCanvasLaunchPointerMove);
+        canvas.addEventListener('pointerup', handleCanvasLaunchPointerUp);
+        canvas.addEventListener('pointercancel', handleCanvasLaunchPointerCancel);
+        window.addEventListener('resize', updateMobileLayoutOffsets);
+        if (window.ResizeObserver) {
+            new ResizeObserver(updateMobileLayoutOffsets).observe(document.querySelector('.sidebar'));
+        }
+
+        loadProgress();
+        generateOpponent();
+        renderAll();
+        showView('home-view');
+        gameLoop();
+    </script>
+</body>
+</html>
