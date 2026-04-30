@@ -814,10 +814,9 @@
                     <div class="panel flex flex-col items-center">
                         <div class="w-full mb-4 flex items-center justify-center gap-4 flex-wrap">
                             <div id="game-status" class="text-xs tracking-widest uppercase">16強 READY</div>
-                            <div> | </div>
-                            <button onclick="openLaunchPopup()">準備發射</button>
                         </div>
-                        <canvas id="gameCanvas"></canvas>
+                        <canvas id="gameCanvas" class="mb-4"></canvas>
+                        <button onclick="openLaunchPopup()">準備發射</button>
                     </div>
 
                     <div class="panel">
@@ -919,8 +918,9 @@
         <p id="launch-popup-round" class="text-[9px] mb-3 text-blue-300">16強</p>
         <p id="launch-popup-opponent" class="text-[9px] mb-6 text-gray-300">VS COM</p>
         <div id="launch-opponent-loadout" class="text-left mb-6"></div>
-        <div class="flex gap-4 justify-center">
+        <div class="flex flex-wrap gap-4 justify-center">
             <button id="launchBtn" onclick="launchGame()">發射! (GO SHOOT!)</button>
+            <button onclick="changeOpponentInLaunchPopup()" class="secondary-btn">換個對手</button>
             <button onclick="closeLaunchPopup()" class="secondary-btn">等一下</button>
         </div>
     </div>
@@ -938,7 +938,7 @@
         <h1 id="result-title" class="text-2xl mb-2 text-red-500">YOU WIN!</h1>
         <p id="result-reason" class="text-xs mb-4 text-yellow-400">持久勝利 (Spin Finish)</p>
         <p id="result-reward" class="text-[9px] mb-6 text-green-400"></p>
-        <div class="flex gap-4 justify-center">
+        <div class="flex flex-wrap gap-4 justify-center">
             <button id="continue-next-battle-btn" onclick="continueNextBattle()" class="continueNextBattle text-[10px]">繼續</button>
             <button id="result-equip-btn" onclick="goAdjustEquipmentAfterLoss()" class="secondary-btn text-[10px]" style="display:none;">調整裝備</button>
             <button onclick="closeResultPopup()" class="secondary-btn text-[10px]">等一下</button>
@@ -984,6 +984,7 @@
             { name: '決賽', reward: 520 }
         ];
         const CHAMPION_BONUS = 1000;
+        const LOSS_REWARD_RATIO = 0.25;
         const DRAW_COST = 300;
 
         const PARTS = {
@@ -1460,11 +1461,22 @@
         function openLaunchPopup() {
             if (isGaming || isPlacingLaunch || winnerDecided || resultOverlay.style.display === 'block') return;
             if (!nextOpponentConfig) generateOpponent();
+            refreshLaunchPopupOpponent();
+            showPopup(launchOverlay);
+        }
+
+        function refreshLaunchPopupOpponent() {
             document.getElementById('launch-popup-round').innerText = ROUNDS[roundIndex].name;
             document.getElementById('launch-popup-opponent').innerText = `VS ${nextOpponentName}`;
             document.getElementById('launch-opponent-loadout').innerHTML =
                 loadoutCardMarkup('對手配置', nextOpponentConfig, nextOpponentName, false, false);
-            showPopup(launchOverlay);
+        }
+
+        function changeOpponentInLaunchPopup() {
+            if (isGaming || isPlacingLaunch) return;
+            generateOpponent();
+            refreshLaunchPopupOpponent();
+            renderOpponent();
         }
 
         function closeLaunchPopup() {
@@ -1887,7 +1899,9 @@
                 }
                 generateOpponent();
             } else if (winner === 'enemy') {
-                lastRewardText = '落敗，保留進度，可再次挑戰同一位對手';
+                const lossReward = Math.max(1, Math.round(ROUNDS[roundIndex].reward * LOSS_REWARD_RATIO));
+                score += lossReward;
+                lastRewardText = `落敗，獲得 ${lossReward} 分。保留進度，可再次挑戰同一位對手`;
             } else {
                 lastRewardText = '平手，階段不變';
             }
