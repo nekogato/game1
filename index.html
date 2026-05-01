@@ -426,6 +426,26 @@
             text-align: center;
         }
 
+        #gameCanvasWrapper{
+            position: relative;
+        }
+
+        #launchBtnWrapper{
+            position: absolute;
+            left:0px;
+            top:0px;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        #launchBtnWrapper button{
+            pointer-events: auto;
+        }
+
         @media (max-width: 860px) {
             body {
                 overflow: auto;
@@ -815,8 +835,10 @@
                         <div class="w-full mb-4 flex items-center justify-center gap-4 flex-wrap">
                             <div id="game-status" class="text-xs tracking-widest uppercase">16強 READY</div>
                         </div>
-                        <canvas id="gameCanvas" class="mb-4"></canvas>
-                        <button onclick="openLaunchPopup()">準備發射</button>
+                        <div id="gameCanvasWrapper">
+                            <canvas id="gameCanvas" class="mb-4"></canvas>
+                            <div id="launchBtnWrapper"><button onclick="openLaunchPopup()" class="text-2xl">準備發射</button></div>
+                        </div>
                     </div>
 
                     <div class="panel">
@@ -963,6 +985,7 @@
         const restartConfirmOverlay = document.getElementById('restart-confirm-overlay');
         const gachaResultOverlay = document.getElementById('gacha-result-overlay');
         const popupBackdrop = document.getElementById('popup-backdrop');
+        const launchBtnWrapper = document.getElementById('launchBtnWrapper');
 
         canvas.width = 600;
         canvas.height = 600;
@@ -1462,6 +1485,7 @@
             if (isGaming || isPlacingLaunch || winnerDecided || resultOverlay.style.display === 'block') return;
             if (!nextOpponentConfig) generateOpponent();
             refreshLaunchPopupOpponent();
+            setLaunchButtonVisible(false);
             showPopup(launchOverlay);
         }
 
@@ -1481,6 +1505,12 @@
 
         function closeLaunchPopup() {
             hidePopup(launchOverlay);
+            if (!isGaming && !isPlacingLaunch && !winnerDecided) setLaunchButtonVisible(true);
+        }
+
+        function setLaunchButtonVisible(visible) {
+            if (!launchBtnWrapper) return;
+            launchBtnWrapper.style.display = visible ? 'flex' : 'none';
         }
 
         function getCanvasPoint(evt) {
@@ -1855,6 +1885,7 @@
             if (isGaming) return;
             if (!nextOpponentConfig) generateOpponent();
             closeLaunchPopup();
+            setLaunchButtonVisible(false);
             isPlacingLaunch = true;
             pendingLaunchPosition = { x: 165, y: 300 };
             statusEl.innerText = '點擊左半邊場地選擇發射位置';
@@ -1942,6 +1973,7 @@
             particles = [];
             effects = [];
             hidePopup(resultOverlay);
+            setLaunchButtonVisible(true);
             statusEl.innerText = `${ROUNDS[roundIndex].name} READY`;
             renderAll();
         }
