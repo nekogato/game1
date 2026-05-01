@@ -474,6 +474,15 @@
             position: relative;
         }
 
+        .battle-control-hint {
+            margin-top: 10px;
+            color: #a1a1aa;
+            font-size: 12pt;
+            line-height: 1.5;
+            text-align: center;
+            max-width: 520px;
+        }
+
         #launchBtnWrapper{
             position: absolute;
             left:0px;
@@ -891,6 +900,9 @@
                         <div id="gameCanvasWrapper">
                             <canvas id="gameCanvas" class="mb-4"></canvas>
                             <div id="launchBtnWrapper"><button onclick="openLaunchPopup()" class="text-4xl">準備發射</button></div>
+                        </div>
+                        <div class="battle-control-hint">
+                            戰鬥中點擊內圈可往內圍，點擊外圈可往外圍。
                         </div>
                     </div>
 
