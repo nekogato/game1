@@ -1352,6 +1352,7 @@
                 this.parts = config.parts;
                 this.useUpgrades = !!config.useUpgrades;
                 this.spinDir = parseInt(config.spinDir);
+                this.orbitSign = Math.random() < 0.7 ? this.spinDir : -this.spinDir;
                 this.stats = this.calculateStats();
                 this.spin = 0;
                 this.maxSpin = 115;
@@ -1410,8 +1411,17 @@
             }
 
             launch(dirX, dirY) {
+                this.orbitSign = Math.random() < 0.72 ? this.spinDir : -this.spinDir;
                 this.vx = dirX * this.stats.speed;
                 this.vy = dirY * this.stats.speed;
+                const rx = this.x - 300;
+                const ry = this.y - 300;
+                const dist = Math.max(1, Math.sqrt(rx * rx + ry * ry));
+                const tangentX = (-ry / dist) * this.orbitSign;
+                const tangentY = (rx / dist) * this.orbitSign;
+                const arcBoost = this.stats.speed * (0.28 + Math.random() * 0.42);
+                this.vx += tangentX * arcBoost;
+                this.vy += tangentY * arcBoost;
                 this.spin = 95 + Math.random() * 20;
                 this.maxSpin = Math.max(115, this.spin);
                 this.battleAtkBonus = 0;
@@ -1437,28 +1447,35 @@
                     const wobbleFactor = this.spin < 20 ? (22 - this.spin) / 6 : 1;
                     const distFromCenter = this.distanceFromCenter();
                     const outerEvasionBonus = distFromCenter > 185 ? this.stats.evasion : 0;
-                    this.vx += (Math.random() - 0.5) * (this.stats.drift + outerEvasionBonus) * 2.2 * wobbleFactor;
-                    this.vy += (Math.random() - 0.5) * (this.stats.drift + outerEvasionBonus) * 2.2 * wobbleFactor;
                     const dx = 300 - this.x;
                     const dy = 300 - this.y;
+                    const radialX = -dx / Math.max(1, distFromCenter);
+                    const radialY = -dy / Math.max(1, distFromCenter);
+                    const tangentX = -radialY * this.orbitSign;
+                    const tangentY = radialX * this.orbitSign;
+                    const spinRatio = Math.max(0.25, Math.min(1, this.spin / this.maxSpin));
+                    const orbitForce = (0.0018 + this.stats.speed * 0.00055 + outerEvasionBonus * 0.0035) * spinRatio * Math.min(1, distFromCenter / 70);
+
                     this.vx += dx * 0.0015;
                     this.vy += dy * 0.0015;
+                    this.vx += tangentX * orbitForce;
+                    this.vy += tangentY * orbitForce;
+                    this.vx += (Math.random() - 0.5) * (this.stats.drift + outerEvasionBonus + 0.012) * 1.25 * wobbleFactor;
+                    this.vy += (Math.random() - 0.5) * (this.stats.drift + outerEvasionBonus + 0.012) * 1.25 * wobbleFactor;
                     if (this.isPlayer && playerControlIntent && now < playerControlIntent.until) {
-                        const outwardX = -dx / Math.max(1, distFromCenter);
-                        const outwardY = -dy / Math.max(1, distFromCenter);
                         const progress = (playerControlIntent.until - now) / PLAYER_CONTROL_DURATION;
                         const response = Math.max(0.52, Math.min(1.32, 1.12 + ((28 - this.stats.wgt) * 0.018)));
                         const stmStability = Math.max(0.88, Math.min(1.15, 0.96 + (this.getCurrentStm() * 0.004)));
                         const controlForce = 0.055 * Math.max(0.25, progress) * response * stmStability;
                         const sign = playerControlIntent.mode === 'outer' ? 1 : -1;
-                        this.vx += outwardX * controlForce * sign;
-                        this.vy += outwardY * controlForce * sign;
+                        this.vx += radialX * controlForce * sign;
+                        this.vy += radialY * controlForce * sign;
 
                         if (playerControlIntent.mode === 'outer') {
-                            const tangentX = -outwardY * this.spinDir;
-                            const tangentY = outwardX * this.spinDir;
-                            this.vx += tangentX * controlForce * 0.55;
-                            this.vy += tangentY * controlForce * 0.55;
+                            const controlTangentX = -radialY * this.spinDir;
+                            const controlTangentY = radialX * this.spinDir;
+                            this.vx += controlTangentX * controlForce * 0.55;
+                            this.vy += controlTangentY * controlForce * 0.55;
                         }
                     }
                     this.vx *= 0.995;
