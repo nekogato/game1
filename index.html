@@ -481,6 +481,23 @@
             line-height: 1.5;
             text-align: center;
             max-width: 520px;
+            min-height: 42px;
+            display: grid;
+            place-items: center;
+            transition: opacity 0.2s ease;
+        }
+
+        .battle-control-hint.fade {
+            opacity: 0;
+        }
+
+        .battle-control-hint .hint-label {
+            color: #facc15;
+            margin-right: 8px;
+        }
+
+        .battle-control-hint .hint-text {
+            color: #d4d4d8;
         }
 
         #launchBtnWrapper{
@@ -901,8 +918,8 @@
                             <canvas id="gameCanvas" class="mb-4"></canvas>
                             <div id="launchBtnWrapper"><button onclick="openLaunchPopup()" class="text-4xl">準備發射</button></div>
                         </div>
-                        <div class="battle-control-hint">
-                            戰鬥中點擊內圈可往內圍，點擊外圈可往外圍。
+                        <div id="battle-hint-carousel" class="battle-control-hint" aria-live="polite">
+                            <div><span class="hint-label">TIP</span><span id="battle-hint-text" class="hint-text">戰鬥中點擊內圈可往內圍，點擊外圈可往外圍。</span></div>
                         </div>
                     </div>
 
@@ -1163,6 +1180,27 @@
         let pendingGachaResult = null;
         const PLAYER_CONTROL_DURATION = 1150;
         const PLAYER_CONTROL_COOLDOWN = 650;
+        const BATTLE_HINTS = [
+            '戰鬥中點擊內圈可往內圍，點擊外圈可往外圍。',
+            'ATK 是攻擊力：撞擊時削減對手旋轉力。',
+            '高 ATK + 高 WGT 更容易造成爆裂或擊出場外。',
+            'STM 是持久力：數值越高，spin bar 下降越慢。',
+            '高 STM 適合守內圈，拖到持久勝利。',
+            'WGT 是重量：越重，撞擊推力越強。',
+            '高 WGT 較能推開對手，但移動和控制反應較慢。',
+            '低 WGT 較靈活，較容易閃避和改變路線。',
+            '陀螺頂上的 bar 是旋轉力，歸零就會持久落敗。',
+            '受到強力撞擊而旋轉力偏低時，有機會爆裂。',
+            '場上四個正方形是出界口，被打進去會場外敗北。',
+            '碰到牆壁會反彈，並損失少量旋轉力。',
+            '旋轉方向相同時，撞擊多數會互相消耗旋轉力。',
+            '旋轉方向相反時，弱勢一方有機會吸收對方旋轉力。',
+            '低 WGT 的陀螺在異向旋轉時較容易吸收旋轉力。',
+            '點外圈適合拉開距離或尋找衝撞角度。',
+            '點內圈適合穩住位置，拚持久或避開場外。'
+        ];
+        let battleHintIndex = 0;
+        let battleHintTimer = null;
 
         function getDefaultState() {
             return {
@@ -2433,6 +2471,26 @@
             });
         }
 
+        function updateBattleHint() {
+            const carousel = document.getElementById('battle-hint-carousel');
+            const textEl = document.getElementById('battle-hint-text');
+            if (!carousel || !textEl) return;
+
+            carousel.classList.add('fade');
+            setTimeout(() => {
+                battleHintIndex = (battleHintIndex + 1) % BATTLE_HINTS.length;
+                textEl.innerText = BATTLE_HINTS[battleHintIndex];
+                carousel.classList.remove('fade');
+            }, 200);
+        }
+
+        function startBattleHints() {
+            const textEl = document.getElementById('battle-hint-text');
+            if (textEl) textEl.innerText = BATTLE_HINTS[battleHintIndex];
+            if (battleHintTimer) clearInterval(battleHintTimer);
+            battleHintTimer = setInterval(updateBattleHint, 4200);
+        }
+
         function gameLoop() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.beginPath(); ctx.arc(300, 300, 280, 0, Math.PI * 2);
@@ -2540,6 +2598,7 @@
         generateOpponent();
         renderAll();
         showView('home-view');
+        startBattleHints();
         gameLoop();
     </script>
 </body>
