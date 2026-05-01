@@ -47,6 +47,7 @@
             aspect-ratio: 1;
             touch-action: none;
             user-select: none;
+            margin: auto;
         }
 
         button, select, input {
@@ -60,6 +61,25 @@
             padding: 10px;
             font-size: 12pt;
             width: 100%;
+        }
+
+        .name-entry-row {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            margin-top: 8px;
+            margin-bottom: 16px;
+        }
+
+        .name-entry-row input {
+            min-width: 0;
+            margin: 0;
+        }
+
+        .name-entry-row button {
+            flex: 0 0 auto;
+            padding-left: 16px;
+            padding-right: 16px;
         }
 
         button {
@@ -119,6 +139,19 @@
             padding: 12px;
             font-size: 12pt;
             line-height: 1.8;
+            width: max-content;
+            max-width: 100%;
+            margin-left: auto;
+            text-align: right;
+            align-self: flex-end;
+        }
+
+        .profile-card > div {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
         }
 
         .nav-btn {
@@ -134,10 +167,26 @@
             box-shadow: 4px 4px 0 #854d0e;
         }
 
-        .reset-btn {
+        .home-actions {
+            display: grid;
+            gap: 14px;
+            justify-items: start;
+        }
+
+        .start-battle-btn {
             width: 100%;
-            background: #7f1d1d;
-            box-shadow: 4px 4px 0 #3f0b0b;
+            background: #e11d48;
+            box-shadow: 4px 4px 0 #7f1d1d;
+        }
+
+        .reset-btn {
+            width: auto;
+            background: #3f3f46 !important;
+            color: #d4d4d8;
+            box-shadow: 3px 3px 0 #18181b;
+            padding: 8px 10px;
+            font-size: 12pt;
+            line-height: 1.2;
         }
 
         .test-btn {
@@ -215,10 +264,10 @@
         }
 
         .home-pixel-art {
-            width: min(100%, 480px);
+            width: min(50%, 480px);
             height: auto;
             aspect-ratio: 3 / 2;
-            margin: 0 0 18px;
+            margin: 0 auto 18px;
             border: 4px solid #fff;
             background: #09090b;
             image-rendering: pixelated;
@@ -540,15 +589,19 @@
 
             .profile-card {
                 display: grid;
-                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-columns: repeat(2, max-content);
                 gap: 6px;
                 padding: 8px;
                 line-height: 1.2;
+                justify-self: end;
+                width: max-content;
+                max-width: 100%;
             }
 
             .profile-card > div {
                 display: flex;
                 align-items: center;
+                justify-content: flex-end;
                 gap: 4px;
                 min-width: 0;
             }
@@ -722,7 +775,7 @@
     <div class="app-shell">
         <aside class="sidebar">
             <div class="brand-block">
-                <h1 class="text-sm text-yellow-400 leading-relaxed">BEY <br>TOURNAMENT</h1>
+                <h1 class="text-sm text-yellow-400 leading-relaxed">陀螺大戰</h1>
             </div>
 
             <div class="profile-card">
@@ -811,8 +864,10 @@
                     </div>
                     
                     <label class="text-[9px] text-gray-400 uppercase">Player Name</label>
-                    <input type="text" id="player-name-input" maxlength="10" placeholder="PLAYER" value="PLAYER" class="mt-2 mb-4">
-                    <button onclick="savePlayerName()">保存</button>
+                    <div class="name-entry-row">
+                        <input type="text" id="player-name-input" maxlength="10" placeholder="PLAYER" value="PLAYER">
+                        <button onclick="savePlayerName()">保存</button>
+                    </div>
                     <div class="mt-8 grid-cards">
                         <div class="part-card">
                             <div class="text-yellow-400 mb-2">淘汰賽</div>
@@ -823,7 +878,8 @@
                             <div>用分數抽取 N / R / SR 零件，再到調整裝備頁換上。</div>
                         </div>
                     </div>
-                    <div class="mt-8">
+                    <div class="home-actions mt-8">
+                        <button class="start-battle-btn" onclick="showView('battle-view')">開始戰鬥</button>
                         <button class="reset-btn" onclick="openRestartConfirm()">重置遊戲</button>
                     </div>
                 </div>
@@ -837,7 +893,7 @@
                         </div>
                         <div id="gameCanvasWrapper">
                             <canvas id="gameCanvas" class="mb-4"></canvas>
-                            <div id="launchBtnWrapper"><button onclick="openLaunchPopup()" class="text-2xl">準備發射</button></div>
+                            <div id="launchBtnWrapper"><button onclick="openLaunchPopup()" class="text-4xl">準備發射</button></div>
                         </div>
                     </div>
 
@@ -865,7 +921,7 @@
                     <div class="grid md:grid-cols-[260px_1fr] gap-4">
                         <div class="part-card">
                             <div>單抽費用</div>
-                            <div class="text-2xl text-yellow-400 my-4">300</div>
+                            <div class="text-8xl text-yellow-400 my-4">300</div>
                             <button id="draw-btn" onclick="drawEquipment()" class="w-full">抽取裝備</button>
                         </div>
                         <div class="part-card">
